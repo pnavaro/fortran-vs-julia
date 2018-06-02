@@ -20,8 +20,8 @@ allocate(th%ex(nx,ny+1),tm%ex(nx,ny+1))
 allocate(th%ey(nx+1,ny),tm%ey(nx+1,ny)) 
 allocate(th%bz(nx,ny),tm%bz(nx,ny))
 
-dx = dimx / (nx-1d0)
-dy = dimy / (ny-1d0)
+dx = dimx / real(nx,kind=8)
+dy = dimy / real(ny,kind=8)
 dt = cfl  / sqrt (1./(dx*dx)+1./(dy*dy)) / c
 nstep = floor(tfinal/dt)
 write(*,*)
@@ -29,6 +29,7 @@ write(*,*) " dx = ", dx
 write(*,*) " dy = ", dy
 write(*,*) " dt = ", dt
 write(*,*)
+write(*,*) nx * dx
 if( nstep > nstepmax ) nstep = nstepmax
 write(*,*) " Nombre d'iteration nstep = ", nstep
 
