@@ -8,15 +8,16 @@ implicit none
 
 integer :: i, j
 real(8) :: tcpu, x0, y0
-type(tm_mesh_fields) :: tm, th
 real(8) :: time, err_l2, r2
 integer :: istep, iplot
+
+type(tm_mesh_fields) :: tm, th
 
 call cpu_time(tcpu)
 call readin( )
 
-allocate(th%ex(nx,ny),tm%ex(nx,ny)) 
-allocate(th%ey(nx,ny),tm%ey(nx,ny)) 
+allocate(th%ex(nx,ny+1),tm%ex(nx,ny+1)) 
+allocate(th%ey(nx+1,ny),tm%ey(nx+1,ny)) 
 allocate(th%bz(nx,ny),tm%bz(nx,ny))
 
 dx = dimx / (nx-1d0)
@@ -39,8 +40,8 @@ omega = c * sqrt((md*pi/dimx)**2+(nd*pi/dimy)**2)
 tm%ex(:,:) = 0.0d0
 tm%ey(:,:) = 0.0d0
 
-do i=1,nx
 do j=1,ny
+do i=1,nx
    tm%bz(i,j) =   - cos(md*pi*(i-0.5)*dx/dimx)    &
                   * cos(nd*pi*(j-0.5)*dy/dimy)	  &
                   * cos(omega*(-0.5*dt))
@@ -85,18 +86,20 @@ do istep = 1, nstep !*** Loop over time
 
    !*** Calcul de B(n+1/2) sur les pts interieurs   
    call faraday(tm, 1, nx, 1, ny)   !Calcul de B(n-1/2)--> B(n+1/2)
-
+ 
    time = time + 0.5*dt
 
-   do i=1,nx
    do j=1,ny
-      th%bz(i,j) =   - cos(md*pi*(i-0.5)*dx/dimx)    &
-                     * cos(nd*pi*(j-0.5)*dy/dimy)    &
-                     * cos(omega*time)
+   do i=1,nx
+      th%bz(i,j) = - cos(md*pi*(i-0.5)*dx/dimx)    &
+                   * cos(nd*pi*(j-0.5)*dy/dimy)    &
+                   * cos(omega*time)
    end do  
    end do  
 
+
    call cl_periodiques(tm, 1, nx, 1, ny)
+
    !Conducteur parfait 
    !call cl_condparfait(tm, 0, nx+1, 0, ny+1,'N')
    !call cl_condparfait(tm, 0, nx+1, 0, ny+1,'S')
@@ -113,15 +116,15 @@ do istep = 1, nstep !*** Loop over time
 
    time = time + 0.5*dt
 
-   do i=1,nx
    do j=1,ny
+   do i=1,nx
 
       th%ex(i,j) = + (csq*nd*pi)/(omega*dimy)   	&
                     * cos(md*pi*(i-0.5)*dx/dimx) 	&
                     * sin(nd*pi*(j-1.0)*dy/dimy) 	&
                     * sin(omega*time)
 
-      th%ey(i,j) = -(csq*md*pi)/(omega*dimx)   	&
+      th%ey(i,j) = -(csq*md*pi)/(omega*dimx)   	        &
                     * sin(md*pi*(i-1.0)*dx/dimx) 	&
                     * cos(nd*pi*(j-0.5)*dy/dimy) 	&
                     * sin(omega*time)
@@ -129,10 +132,8 @@ do istep = 1, nstep !*** Loop over time
    end do  
    end do  
 
-   !-----------------------------------------------------------!
-   !*** Sorties graphiques (les champs sont connus au temps n) ! 
-   !*** pour le solveur de MAXWELL                             !
-   !-----------------------------------------------------------!
+
+   !*** diagnostics ***
 
    if ( istep==1 .or. mod(istep,idiag) == 0.0) then
       iplot = iplot + 1
