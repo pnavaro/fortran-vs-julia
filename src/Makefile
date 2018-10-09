@@ -1,11 +1,7 @@
 PROG = maxyee maxyee_par
 
-SRCS =	solveur_yee.F90 sorties.F90 commun.F90 \
-	silo_module.F90
-
-OBJS =	solveur_yee.o sorties.o commun.o	\
-	silo_module.o
-
+SRCS =	solveur_yee.F90 sorties.F90 commun.F90 
+OBJS =	solveur_yee.o sorties.o commun.o
 F90 = mpif90
 OPT = -O3
 F90FLAGS = -cpp $(OPT) 
@@ -31,7 +27,6 @@ clean:
 	$(F90) $(F90FLAGS) -c $*.F90
 
 commun.o: commun.F90
-silo_module.o: silo_module.F90 commun.o
 solveur_yee.o: solveur_yee.F90 commun.o
 sorties.o: sorties.F90 commun.o
 main.o: main.F90 $(OBJS)
