@@ -23,3 +23,15 @@ gnuplot Bz.gnu
 ##  Note
 
 A sequential version is also built named `maxyee`
+
+## Julia version
+
+Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
+
+```
+$ mpirun --oversubscribe -np 4 julia --project hello_mpi.jl
+Hello world, I am 0 of 4
+Hello world, I am 3 of 4
+Hello world, I am 1 of 4
+Hello world, I am 2 of 4
+```
