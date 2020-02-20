@@ -1,6 +1,6 @@
 module sorties
 
-use commun, only: tm_mesh_fields, dx, dy
+use commun, only: mesh_fields, dx, dy
 
 implicit none
 
@@ -15,7 +15,7 @@ subroutine plot_fields(rang, nproc, f1, f2, ix, jx, iy, jy, &
                        xp, yp, iplot, time )
 
 integer, intent(in) :: rang, ix, jx, iy, jy, nproc
-type (tm_mesh_fields), intent(in) :: f1, f2
+type (mesh_fields), intent(in) :: f1, f2
 integer :: iplot, i, j
 real(8) :: time, xp, yp
 integer :: kk0, kk1, kk2, kk3, kk4

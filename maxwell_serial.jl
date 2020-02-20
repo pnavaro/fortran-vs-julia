@@ -62,7 +62,7 @@ function main( nstep )
            err_l2 += (fields.bz[i,j] - th_bz)^2
        end
     
-       println(err_l2)
+       println(sqrt(err_l2))
     
     end # next time step
     

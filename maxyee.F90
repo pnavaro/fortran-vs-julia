@@ -46,42 +46,8 @@ do i=1,nx
    tm%bz(i,j) =   - cos(md*pi*(i-0.5)*dx/dimx)    &
                   * cos(nd*pi*(j-0.5)*dy/dimy)	  &
                   * cos(omega*(-0.5*dt))
-!   r2 = ((i-0.5)*dx - 0.25*dimx)**2 +  ((j-0.5)*dy - 0.5*dimy)**2
-!   tm%bz(i,j) =   exp(-r2/0.02)
 end do  
 end do  
-
-open(4,file="yee.mtv") 
-write(4,*)"$DATA=CURVE3D"
-write(4,*)"%equalscale=T"
-write(4,*)"%xmin=",-0.2, " xmax = ", 1.2
-write(4,*)"%ymin=",-0.2, " ymax = ", 1.2
-do i = 1, nx
-do j = 1, ny
-   x0 = (i-1)*dx; y0 = (j-1)*dy
-   write(4,"(3f7.3)") x0   , y0   , 0.0
-   write(4,"(3f7.3)") x0+dx, y0   , 0.0
-   write(4,"(3f7.3)") x0+dx, y0+dy, 0.0
-   write(4,"(3f7.3)") x0   , y0+dy, 0.0
-   write(4,"(3f7.3)") x0   , y0   , 0.0
-   write(4,*) 
-end do
-end do
-write(4,*)"$DATA=CONTOUR" 
-write(4,*)"%contstyle=",3 
-write(4,*)"%nx=",nx 
-write(4,*)"%ny=",ny 
-write(4,*)"%xmin=",0.0
-write(4,*)"%ymin=",0.0
-write(4,*)"%xmax=",dimx 
-write(4,*)"%ymax=",dimy
-write(4,*)"%nsteps=",10 
-do i = 1,nx 
-   write(4,*)(tm%bz(i,j),j=1,ny) 
-end do
-write(4,*)"$END"
-close(4)
-
 
 do istep = 1, nstep !*** Loop over time
 
@@ -97,7 +63,6 @@ do istep = 1, nstep !*** Loop over time
                    * cos(omega*time)
    end do  
    end do  
-
 
    call cl_periodiques(tm, 1, nx, 1, ny)
 
@@ -117,28 +82,28 @@ do istep = 1, nstep !*** Loop over time
 
    time = time + 0.5*dt
 
-   do j=1,ny
-   do i=1,nx
+   !do j=1,ny
+   !do i=1,nx
 
-      th%ex(i,j) = + (csq*nd*pi)/(omega*dimy)   	&
-                    * cos(md*pi*(i-0.5)*dx/dimx) 	&
-                    * sin(nd*pi*(j-1.0)*dy/dimy) 	&
-                    * sin(omega*time)
+   !   th%ex(i,j) = + (csq*nd*pi)/(omega*dimy)   	&
+   !                 * cos(md*pi*(i-0.5)*dx/dimx) 	&
+   !                 * sin(nd*pi*(j-1.0)*dy/dimy) 	&
+   !                 * sin(omega*time)
 
-      th%ey(i,j) = -(csq*md*pi)/(omega*dimx)   	        &
-                    * sin(md*pi*(i-1.0)*dx/dimx) 	&
-                    * cos(nd*pi*(j-0.5)*dy/dimy) 	&
-                    * sin(omega*time)
+   !   th%ey(i,j) = -(csq*md*pi)/(omega*dimx)   	        &
+   !                 * sin(md*pi*(i-1.0)*dx/dimx) 	&
+   !                 * cos(nd*pi*(j-0.5)*dy/dimy) 	&
+   !                 * sin(omega*time)
 
-   end do  
-   end do  
+   !end do  
+   !end do  
 
 
    !*** diagnostics ***
 
    if ( istep==1 .or. mod(istep,idiag) == 0.0) then
       iplot = iplot + 1
-      call plot_fields(0, 1, tm, th, 1, nx, 1, ny, 0d0, 0d0, iplot, time )
+      !call plot_fields(0, 1, tm, th, 1, nx, 1, ny, 0d0, 0d0, iplot, time )
       err_l2 = 0.0
       do j = 1, ny
       do i = 1, nx

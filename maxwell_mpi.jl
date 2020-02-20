@@ -156,7 +156,7 @@ function main( nstep )
     
        sum_err_l2 = MPI.Reduce(err_l2, +, 0, comm2d)
        if rank == 0 
-           println(sum_err_l2)
+           println(sqrt(sum_err_l2))
        end
     
        #plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )

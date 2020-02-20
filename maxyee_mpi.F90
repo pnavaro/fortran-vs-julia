@@ -1,5 +1,5 @@
 program Maxwell_Yee_2d
-use commun, only: nx, ny, tm_mesh_fields, pi, csq, nstep, omega, &
+use commun, only: nx, ny, mesh_fields, pi, csq, nstep, omega, &
 		  dimx, dimy, dx, dy, dt, c, md, nd, idiag, 	 &
 		  readin, tfinal, cfl, nstepmax
 use sorties, only: plot_fields
@@ -11,7 +11,7 @@ use silo_module,only: write_master, write_domains
 implicit none
 include 'mpif.h'
 
-type(tm_mesh_fields) :: tm, th
+type(mesh_fields) :: tm, th
 integer :: i, j, iproc, istep, iplot
 real(8) :: tcpu1, tcpu2, time, err_l2, sum_l2, xp, yp
 real(8) :: x1, y1, r2, dtloc

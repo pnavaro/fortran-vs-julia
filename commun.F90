@@ -1,9 +1,9 @@
 module commun
 
-type tm_mesh_fields
+type mesh_fields
    real(8), dimension(:,:), pointer :: ex, ey
    real(8), dimension(:,:), pointer :: bz
-end type tm_mesh_fields
+end type mesh_fields
 
 real(8) :: c, csq
 real(8) :: pi 
