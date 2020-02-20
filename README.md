@@ -2,27 +2,20 @@
 
 We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology
 
-## Build
-
+## Build and run
 ```
 make
-````
-
-## Run
-
-```
 mpirun -np 4 ./maxyee_par 
 ```
+You can modify `src/Makefile` and `input_data`.
+
+NB: A sequential version is also built named `maxyee`
 
 ## Plot the magnetic field
 
 ```
 gnuplot Bz.gnu
 ```
-
-##  Note
-
-A sequential version is also built named `maxyee`
 
 ## Julia version
 
@@ -43,3 +36,12 @@ mpirun -np 4 julia --project main.jl
 ```
 
 ![](bz_field.gif)
+
+# Performances
+
+1000 x 1000 on 4 processors 
+
+- `gfortran -O3` : 22 seconds 
+- `gfortran -O3` serial : 40 seconds 
+- `julia -O3 --check-bounds=no` serial : 16 seconds
+- `julia -O3 --check-bounds=no MPI` : 5 seconds
