@@ -84,7 +84,7 @@ if (rang == 0) then
          !write(90,*)"set cbrange[-1:1]"
          !write(90,*)"set pm3d"
          write(90,*)"set surf"
-         write(90,*)"set term x11"
+         !write(90,*)"set term x11"
       end if
       write(90,*)"set title 'Time = ",time,"'"
       write(90,"(a)",advance='no')"splot '" 	&
