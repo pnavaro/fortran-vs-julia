@@ -35,3 +35,11 @@ Hello world, I am 3 of 4
 Hello world, I am 1 of 4
 Hello world, I am 2 of 4
 ```
+
+Run the maxwell simulation
+
+```
+mpirun -np 4 julia --project main.jl
+```
+
+![](bz_field.gif)

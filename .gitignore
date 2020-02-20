@@ -37,3 +37,6 @@ src/maxyee
 yee.mtv
 maxyee
 *.swp
+data/
+image*.gif
+Manifest.toml

@@ -105,10 +105,10 @@ function plot_fields(rank, proc, field, ix, jx, iy, jy, xp, yp, iplot )
       for p = 1:proc-1
          write(io, ", 'data/$(p)/$(iplot)' u 1:2:3 w lines")
       end
-      write(io, "\n")
-      #write( io, "set term gif \n")
-      #write( io, "set output 'image$(iplot).gif'\n")
-      #write( io, "replot\n")
+      write( io, "\n")
+      write( io, "set term gif \n")
+      write( io, "set output 'image$(iplot).gif'\n")
+      write( io, "replot\n")
 
       close(io)
 
