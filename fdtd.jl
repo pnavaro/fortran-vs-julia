@@ -26,7 +26,6 @@ function ampere_maxwell!( fields, ix, jx, iy, jy, dt )
 
 end 
 
-
 function periodic_bc!(fields, ix, jx, iy, jy, dt)
 
     for i = ix:jx
@@ -42,4 +41,3 @@ function periodic_bc!(fields, ix, jx, iy, jy, dt)
     end
 
 end
-

@@ -1,6 +1,6 @@
 module solveur_yee
 
-use commun, only: tm_mesh_fields, dx, dy, dt, csq , c
+use commun, only: mesh_fields, dx, dy, dt, csq , c
 
 implicit none
 
@@ -15,7 +15,7 @@ contains
 
 subroutine faraday( tm, ix, jx, iy, jy )
 
-type( tm_mesh_fields ) :: tm
+type( mesh_fields ) :: tm
 integer, intent(in) :: ix, jx, iy, jy
 
 !*** On utilise l'equation de Faraday sur un demi pas
@@ -37,7 +37,7 @@ end subroutine faraday
 
 subroutine ampere_maxwell( tm, ix, jx, iy, jy )
 
-type( tm_mesh_fields ) :: tm
+type( mesh_fields ) :: tm
 integer, intent(in) :: ix, jx, iy, jy
 
 !*** Calcul du champ electrique E au temps n+1
@@ -65,7 +65,7 @@ end subroutine ampere_maxwell
 
 subroutine cl_periodiques(tm, ix, jx, iy, jy)
 
-type( tm_mesh_fields ) :: tm
+type( mesh_fields ) :: tm
 integer, intent(in) :: ix, jx, iy, jy
 
 do i = ix, jx
@@ -88,7 +88,7 @@ end subroutine
 subroutine cl_condparfait(tm, ix, jx, iy, jy, cchar)
 
 character, intent(in) :: cchar
-type( tm_mesh_fields ) :: tm
+type( mesh_fields ) :: tm
 integer, intent(in) :: ix, jx, iy, jy
 
 select case(cchar)
@@ -121,7 +121,7 @@ subroutine silver_muller( tm, ix, jx, iy, jy, ccall )
 
 character, intent(in) :: ccall
 integer, intent(in) :: ix, jx, iy, jy
-type( tm_mesh_fields ) :: tm
+type( mesh_fields ) :: tm
 real(8) :: a11,a12,a21,a22,b1,b2,dis
 
 

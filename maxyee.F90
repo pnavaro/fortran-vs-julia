@@ -11,7 +11,7 @@ real(8) :: tcpu, x0, y0
 real(8) :: time, err_l2, r2
 integer :: istep, iplot
 
-type(tm_mesh_fields) :: tm, th
+type(mesh_fields) :: tm, th
 
 call cpu_time(tcpu)
 call readin( )
