@@ -1,4 +1,5 @@
 using MPI
+using Printf
 
 struct MeshFields
 
@@ -21,7 +22,6 @@ csq = c * c
 cfl    = 0.2 	# Courant-Friedrich-Levy
 tfinal = 1.	# final time
 nstepmax = 500  # max steps
-idiag  = 1	# output period
 md = 2		# md : wave number x
 nd = 2		# nd : wave number y
 nx = 100	# x number of points
@@ -71,6 +71,51 @@ function periodic_bc(tm, ix, jx, iy, jy)
 end 
 
 
+function plot_fields(rank, proc, field, ix, jx, iy, jy, xp, yp, iplot )
+
+    if iplot == 1
+        mkpath("data/$rank")
+    end
+
+    io = open("data/$(rank)/$(iplot)", "w")
+    for j=iy:jy
+        for i=ix:jx
+            @printf( io, "%f %f %f \n", xp+(i-0.5)*dx, yp+(j-1)*dy, field[i,j])
+        end
+        @printf( io, "\n")
+    end
+    close(io)
+   
+    # write master file
+
+    if rank == 0
+
+      if iplot == 1 
+         io = open( "field.gnu", "w" )
+         write(io, "set xr[-0.1:1.1]\n")
+         write(io, "set yr[-0.1:1.1]\n")
+         write(io, "set zr[-1.1:1.1]\n")
+         write(io, "set surf\n")
+      else
+         io = open( "field.gnu", "a" )
+      end
+      write(io, "set title '$(iplot)' \n")
+      write(io, "splot 'data/$(rank)/$(iplot)' u 1:2:3 w lines")
+   
+      for p = 1:proc-1
+         write(io, ", 'data/$(p)/$(iplot)' u 1:2:3 w lines")
+      end
+      write(io, "\n")
+      #write( io, "set term gif \n")
+      #write( io, "set output 'image$(iplot).gif'\n")
+      #write( io, "replot\n")
+
+      close(io)
+
+    end
+
+end 
+
 MPI.Init()
 comm = MPI.COMM_WORLD
 proc = MPI.Comm_size(comm)
@@ -94,15 +139,14 @@ disp = 1
 north, south = MPI.Cart_shift(comm2d,0,1)
 west,  east  = MPI.Cart_shift(comm2d,1,1)
 
-#coords = MPI.Cart_coords(comm2d, rank)
-coords = MPI.Cart_coords(comm2d, ndims)
+coords = MPI.Cart_coords(comm2d)
 
 nxp, nyp = dims
 
 mx = nx ÷ nxp
 dx = dimx / mx / nxp
 my = ny ÷ nyp
-dy = dimy/ my / nyp
+dy = dimy / my / nyp
 
 dt = cfl / sqrt(1/dx^2+1/dy^2) / c
 
@@ -112,145 +156,63 @@ nstep  = min( nstepmax, nstep)
 
 MPI.Barrier(comm)
 
-MPI_REAL8 = MPI.Datatype(MPI.MPI_Datatype(MPI.MPI_DOUBLE))
+xp = coords[1]/nxp * dimx 
+yp = coords[2]/nyp * dimy 
 
-column_type = MPI.Type_Contiguous(mx+1, MPI_REAL8)
-MPI.Type_Commit!(column_type)
-row_type = MPI.Type_Vector(my+1,1,mx+1,MPI_REAL8)
-MPI.Type_Commit(row_type)
+tm = MeshFields(mx, my)
 
-#=
-
-!column datatype
-
-CALL MPI_TYPE_CONTIGUOUS(mx+1,MPI_REAL8,type_colonne,code)
-CALL MPI_TYPE_COMMIT(type_colonne,code)
-!type ligne
-CALL MPI_TYPE_VECTOR(my+1,1,mx+1,MPI_REAL8,type_ligne,code)
-CALL MPI_TYPE_COMMIT(type_ligne,code)
-
-!Initialisation des champs 
-tm.ex(:,:) = 0d0; tm.ey(:,:) = 0d0; tm.bz(:,:) = 0d0
-
-xp = dble(coords(1))/nxp * dimx 
-yp = dble(coords(2))/nyp * dimy 
-
-omega = c * sqrt((md*pi/dimx)**2+(nd*pi/dimy)**2)
-for j=1,my
-   for i=1,mx
-      tm.bz(i,j) = - cos(md*pi*(xp+(i-0.5)*dx/dimx))  &
-                   * cos(nd*pi*(yp+(j-0.5)*dy/dimy))  &
-                   * cos(omega*(-0.5*dt))
-      !r2 = (xp+(i-0.5)*dx)**2 +  (yp+(j-0.5)*dy - 0.5*dimy)**2
-      !tm.bz(i,j) =   exp(-r2/0.02)
-   end  
+omega = c * sqrt((md*pi/dimx)^2+(nd*pi/dimy)^2)
+for j=1:my, i=1:mx
+    tm.bz[i,j] = (- cos(md*pi*(xp+(i-0.5)*dx/dimx)) 
+                  * cos(nd*pi*(yp+(j-0.5)*dy/dimy))
+                  * cos(omega*(-0.5*dt)) )
 end  
 
-for istep = 1, nstep !*** Loop over time
+tag = 1111
 
-   !E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
-   call faraday(tm, 1, mx+1, 1, my+1)   
+for istep = 1:nstep #*** Loop over time
 
-   time = time + 0.5*dt
+   # E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
+   faraday!(tm, 1, mx, 1, my)   
 
-   for j=1,my
-   for i=1,mx
-      th%bz(i,j) =   - cos(md*pi*(xp+(i-0.5)*dx/dimx))  &
-                     * cos(nd*pi*(yp+(j-0.5)*dy/dimy))  &
-                     * cos(omega*time)
-   end  
-   end  
+   # Send to North  and receive from South
+   MPI.Sendrecv!(tm.bz[ 1, 1:my+1], north, tag,
+                 tm.bz[mx, 1:my+1], south, tag, comm2d)
 
-   !for i = 1, mx
-      !print"(11f7.2)", ( (i-0.5)*dx, j= 1,my)
-   !end
+   # Send to West and receive from East
+   MPI.Sendrecv!(tm.bz[1:mx+1, 1], west, tag,
+                 tm.bz[1:mx+1,my], east, tag, comm2d)
 
-   !Envoi au voisin N et reception du voisin S
-   CALL MPI_SENDRECV(tm.bz(   1,   1),1,type_ligne,voisin(N),tag, 	&
-                     tm.bz(mx+1,   1),1,type_ligne,voisin(S),tag, 	&
-                     comm2d, statut, code)
+   # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
+   # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]
+   ampere_maxwell!(tm, 1, mx, 1, my) 
 
-   !Envoi au voisin W et reception du voisin E
-   CALL MPI_SENDRECV(tm.bz(   1,   1),1,type_colonne,voisin(W),tag,	&
-                     tm.bz(   1,my+1),1,type_colonne,voisin(E),tag,	&
-                     comm2d, statut, code)
+   # Send to East and receive from West
+   MPI.Sendrecv!(tm.ex[1:mx+1,my+1], east, tag,
+                 tm.ex[1:mx+1,   1], west, tag, comm2d)
 
-   !Envoi au voisin NW et reception du voisin SE
-   !CALL MPI_SENDRECV(tm.bz(   1,   1),1,MPI_REAL8,voisin(NW),tag,	&
-   !                  tm.bz(  mx,  my),1,MPI_REAL8,voisin(SE),tag,	&
-   !                  comm2d, statut, code)
+   # Send to South and receive from North
+   MPI.Sendrecv!(tm.ey[mx+1,1:my+1], south, tag,
+                 tm.ey[   1,1:my+1], north, tag, comm2d)
 
-   !Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
-   !Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]
-   call ampere_maxwell(tm, 1, mx+1, 1, my+1) 
-
-   !Envoi au voisin E et reception du voisin W
-   CALL MPI_SENDRECV(tm.ex(   1,my+1),1,type_colonne,voisin(E),tag,	&
-                     tm.ex(   1,   1),1,type_colonne,voisin(W),tag,	&
-                     comm2d, statut, code)
-
-   !Envoi au voisin S et reception du voisin N
-   CALL MPI_SENDRECV(tm.ey(mx+1,   1),1,type_ligne,voisin(S),tag, 	&
-                     tm.ey(   1,   1),1,type_ligne,voisin(N),tag, 	&
-                     comm2d, statut, code)
-
-   time = time + 0.5*dt
-
-   for j=1,my
-   for i=1,mx
-      th%ex(i,j) = + (csq*nd*pi)/(omega*dimy)   	&
-                    * cos(md*pi*(xp+(i-0.5)*dx/dimx)) 	&
-                    * sin(nd*pi*(yp+(j-1.0)*dy/dimy)) 	&
-                    * sin(omega*time)
-      th%ey(i,j) = - (csq*md*pi)/(omega*dimx)   	&
-                    * sin(md*pi*(xp+(i-1.0)*dx/dimx)) 	&
-                    * cos(nd*pi*(yp+(j-0.5)*dy/dimy)) 	&
-                    * sin(omega*time)
-   end  
-   end  
-
-   !-----------------------------------------------------------!
-   !    Sorties graphiques (les champs sont connus au temps n) ! 
-   !    pour le solveur de MAXWELL                             !
-   !-----------------------------------------------------------!
-
-   if ( istep==1 .or. mod(istep,idiag) == 0.0) then
-      iplot = iplot + 1
-
-      call plot_fields(rang, nproc, tm, th, 1, mx, 1, my, 	&
-                       xp, yp, iplot, time )
-      err_l2 = 0.0
-      for j = 1, my
-      for i = 1, mx
-         err_l2 = err_l2 + (tm.bz(i,j) - th%bz(i,j))**2
-      end
-      end
-
-      call MPI_REDUCE (err_l2,sum_l2,1,MPI_REAL8,MPI_SUM,0,comm2d,code)
-
-      if (rang == 0) then
-         open(17,file="thf.dat",position="append")
-         if (istep==1) rewind(17)
-         write(17,*) time, err_l2
-         close(17)
-         write(*,"(10x,' istep = ',I6)",advance="no") istep
-         write(*,"(' time = ',e17.3,' ns')",advance="no") time*1e09
-         write(*,"(' erreur L2 = ',g10.3)") sqrt(sum_l2)
-      end
-
-      !call write_domains(rang, xp, yp, dx, dy, mx, my, tm, iplot)
-      !if (rang == 0) call write_master(nproc, iplot)
-
+   err_l2 = 0.0
+   time = (istep-0.5)*dt
+   for j = 1:my, i = 1:mx
+       th_bz = (- cos(md*pi*(xp+(i-0.5)*dx/dimx))
+                * cos(nd*pi*(yp+(j-0.5)*dy/dimy))
+                * cos(omega*time))
+       err_l2 += (tm.bz[i,j] - th_bz)^2
    end
 
-end ! next time step
+   sum_err_l2 = MPI.Reduce(err_l2, +, 0, comm2d)
+   if rank == 0 
+       println(sum_err_l2)
+   end
 
-call FLUSH(6)
-call MPI_BARRIER(MPI_COMM_WORLD, code)
-tcpu2 = MPI_WTIME()
-if (rang == 0) &
-   write(*,"(//10x,' Temps CPU = ', G15.3, ' sec' )") (tcpu2-tcpu1)*nproc
+   plot_fields(rank, proc, tm.bz, 1, mx, 1, my, xp, yp, istep )
 
-=#
+
+end # next time step
+
 MPI.Barrier(comm)
 MPI.Finalize()
