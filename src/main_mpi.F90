@@ -192,7 +192,7 @@ end do
 do istep = 1, nstep !*** Loop over time
 
    !E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
-   call faraday(tm, 1, mx+1, 1, my+1)   
+   call faraday(tm, 1, mx, 1, my)   
 
    time = time + 0.5*dt
 
@@ -209,13 +209,13 @@ do istep = 1, nstep !*** Loop over time
    !end do
 
    !Envoi au voisin N et reception du voisin S
-   CALL MPI_SENDRECV(tm%bz(   1,   1),1,type_ligne,voisin(N),tag, 	&
-                     tm%bz(mx+1,   1),1,type_ligne,voisin(S),tag, 	&
+   CALL MPI_SENDRECV(tm%bz(  1,  1),1,type_ligne,voisin(N),tag, 	&
+                     tm%bz(mx,   1),1,type_ligne,voisin(S),tag, 	&
                      comm2d, statut, code)
 
    !Envoi au voisin W et reception du voisin E
-   CALL MPI_SENDRECV(tm%bz(   1,   1),1,type_colonne,voisin(W),tag,	&
-                     tm%bz(   1,my+1),1,type_colonne,voisin(E),tag,	&
+   CALL MPI_SENDRECV(tm%bz(   1, 1),1,type_colonne,voisin(W),tag,	&
+                     tm%bz(   1,my),1,type_colonne,voisin(E),tag,	&
                      comm2d, statut, code)
 
    !Envoi au voisin NW et reception du voisin SE
@@ -225,7 +225,7 @@ do istep = 1, nstep !*** Loop over time
 
    !Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
    !Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]
-   call ampere_maxwell(tm, 1, mx+1, 1, my+1) 
+   call ampere_maxwell(tm, 1, mx, 1, my) 
 
    !Envoi au voisin E et reception du voisin W
    CALL MPI_SENDRECV(tm%ex(   1,my+1),1,type_colonne,voisin(E),tag,	&
