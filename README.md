@@ -7,7 +7,7 @@ We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](htt
 make
 mpirun -np 4 ./maxyee_par 
 ```
-You can modify `src/Makefile` and `input_data`.
+You can modify `Makefile` and `input_data`.
 
 NB: A sequential version is also built named `maxyee`
 
