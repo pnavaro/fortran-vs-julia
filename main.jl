@@ -107,7 +107,7 @@ function plot_fields(rank, proc, field, ix, jx, iy, jy, xp, yp, iplot )
       end
       write( io, "\n")
       write( io, "set term gif \n")
-      write( io, "set output 'image$(iplot).gif'\n")
+      write( io, "set output 'image$(lpad(iplot,3,"0")).gif'\n")
       write( io, "replot\n")
 
       close(io)
