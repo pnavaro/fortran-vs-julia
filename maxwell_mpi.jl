@@ -132,6 +132,15 @@ function main( nstep )
     
        # E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
        faraday!(fields, 1, mx, 1, my, dt)   
+
+       # Send to North  and receive from South
+       MPI.Sendrecv!(fields.bz[ 1,   1:my+1], north, tag,
+                     fields.bz[mx+1, 1:my+1], south, tag, comm2d)
+    
+       # Send to West and receive from East
+       MPI.Sendrecv!(fields.bz[1:mx+1,   1], west, tag,
+                     fields.bz[1:mx+1,my+1], east, tag, comm2d)
+    
     
        # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
        # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]

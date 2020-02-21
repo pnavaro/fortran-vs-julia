@@ -40,4 +40,7 @@ function periodic_bc!(fields, ix, jx, iy, jy, dt)
        fields.ey[jx+1,j] = fields.ey[ix,j]
     end
 
+    fields.bz[:,jy+1] .= fields.bz[:,iy]
+    fields.bz[jx+1,:] .= fields.bz[ix,:]
+    
 end

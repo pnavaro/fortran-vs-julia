@@ -30,7 +30,7 @@ struct MeshFields
         nx, ny = mesh.nx, mesh.ny
         ex = zeros(Float64, (nx,ny+1))
         ey = zeros(Float64, (nx+1,ny))
-        bz = zeros(Float64, (nx,ny))
+        bz = zeros(Float64, (nx+1,ny+1))
         new( mesh, ex, ey, bz)
 
     end
