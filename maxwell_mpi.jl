@@ -63,8 +63,8 @@ function main( nstep )
     nstepmax = 500  # max steps
     md = 2          # md : wave number x (initial condition)
     nd = 2          # nd : wave number y (initial condition)
-    nx = 100       # x number of points
-    ny = 100       # y number of points
+    nx = 1200       # x number of points
+    ny = 1200       # y number of points
     dimx = 1.0      # width
     dimy = 1.0      # height
 
