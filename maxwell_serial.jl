@@ -7,15 +7,15 @@ include("fdtd.jl")
 
 function main( nstep )
 
-    cfl    = 0.2    # Courant-Friedrich-Levy
-    tfinal = 1.	    # final time
-    nstepmax = 500  # max steps
-    md = 2	    # md : wave number x (initial condition)
-    nd = 2	    # nd : wave number y (initial condition)
-    nx = 1200	    # x number of points
-    ny = 1200	    # y number of points
-    dimx = 1.0	    # width
-    dimy = 1.0	    # height
+    cfl    = 0.1     # Courant-Friedrich-Levy
+    tfinal = 10.     # final time
+    nstepmax = 1000  # max steps
+    md = 2	     # md : wave number x (initial condition)
+    nd = 2	     # nd : wave number y (initial condition)
+    nx = 1200	     # x number of points
+    ny = 1200	     # y number of points
+    dimx = 1.0	     # width
+    dimy = 1.0	     # height
 
     dx = dimx / nx
     dy = dimy / ny
@@ -26,7 +26,7 @@ function main( nstep )
     
     dt = cfl / sqrt(1/dx^2+1/dy^2) / c
     
-    nstep  = min( nstepmax, nstep)
+    @show nstep  = min( nstepmax, nstep)
     
     fields = MeshFields(mesh)
     
@@ -72,4 +72,4 @@ end
 
 main( 1 ) # trigger building
 
-@time println(main( 500 ))
+@time println(main( 1000 ))

@@ -41,10 +41,10 @@ mpirun -np 4 julia --project main.jl
 
 ## Serial computation
 
-1200 x 1200 and 500 iterations.
+1200 x 1200 and 1000 iterations.
 
-- `julia -O3 --check-bounds=no maxwell_serial.jl` : 7 seconds
-- `gfortran -O3` : 13 seconds 
+- `julia -O3 --check-bounds=no maxwell_serial.jl` : 7.8 seconds
+- `gfortran -O3` : 8.8 seconds 
 
 1200 x 1200 on 4 processors and 500 iterations
 

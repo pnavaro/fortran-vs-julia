@@ -35,5 +35,14 @@ struct MeshFields
 
     end
 
+    function MeshFields( mesh, nx, ny )
+
+        ex = zeros(Float64, (nx+1,ny+1))
+        ey = zeros(Float64, (nx+1,ny+1))
+        bz = zeros(Float64, (nx+1,ny+1))
+        new( mesh, ex, ey, bz)
+
+    end
+
 end 
 
