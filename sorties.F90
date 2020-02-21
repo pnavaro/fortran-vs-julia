@@ -11,19 +11,17 @@ contains
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine plot_fields(rang, nproc, f1, f2, ix, jx, iy, jy, &
+subroutine plot_fields(rang, nproc, f, ix, jx, iy, jy, &
                        xp, yp, iplot, time )
 
 integer, intent(in) :: rang, ix, jx, iy, jy, nproc
-type (mesh_fields), intent(in) :: f1, f2
+type (mesh_fields), intent(in) :: f
 integer :: iplot, i, j
 real(8) :: time, xp, yp
 integer :: kk0, kk1, kk2, kk3, kk4
 character(len=4) :: fin
 character(len=1) :: aa,bb,cc,dd
-character(len=2), dimension(3) :: which 
 
-which(1) = 'Ex'; which(2) = 'Ey'; which(3) = 'Bz'
 if (iplot == 1) then
    k = len_trim(outdir)
    outdir(k:) = "/"//char(rang+48)//"/"
@@ -41,41 +39,18 @@ kk4 = (kk0 - (kk1*1000) - (kk2*100) - (kk3*10))/1
 dd  = char(kk4 + 48)
 fin = aa//bb//cc//dd
 
-!write domains
-open( 80, file = trim(outdir)//which(1)//fin//".dat" )
+open( 80, file = trim(outdir)//fin//".dat" )
    do i=ix,jx
       do j=iy,jy
-         write(80,"(4e10.2)") xp+(i-0.5)*dx, yp+(j-1)*dy, 	&
-         		      f1%ex(i,j), f2%ex(i,j)
+         write(80,"(4e10.2)") xp+(i-0.5)*dx, yp+(j-.5)*dy, f%bz(i,j)
       end do
       write(80,*) 
    end do
 close(80)
    
-open( 80, file = trim(outdir)//which(2)//fin//".dat" )
-   do i=ix,jx
-      do j=iy,jy
-         write(80,"(4e10.2)") xp+(i-1)*dx, yp+(j-.5)*dy, 	&
-         		      f1%ey(i,j), f2%ey(i,j)
-      end do
-      write(80,*) 
-   end do
-close(80)
-   
-open( 80, file = trim(outdir)//which(3)//fin//".dat" )
-   do i=ix,jx
-      do j=iy,jy
-         write(80,"(4e10.2)") xp+(i-0.5)*dx, yp+(j-.5)*dy, 	&
-         		      f1%bz(i,j),f2%bz(i,j)
-      end do
-      write(80,*) 
-   end do
-close(80)
-   
-!write master file
 if (rang == 0) then
    do k = 1, 3
-      open( 90, file = which(k)//'.gnu', position="append" )
+      open( 90, file = 'bz.gnu', position="append" )
       if ( iplot == 1 ) then
          rewind(90)
          write(90,*)"set xr[-0.1:1.1]"
@@ -88,22 +63,14 @@ if (rang == 0) then
       end if
       write(90,*)"set title 'Time = ",time,"'"
       write(90,"(a)",advance='no')"splot '" 	&
-      & //trim(outdir)//which(k)//fin//".dat' u 1:2:3 w lines"
-      write(90,"(a)",advance='no')",'"		&
-      & //trim(outdir)//which(k)//fin//".dat' u 1:2:4 w lines"
+      & //trim(outdir)//fin//".dat' u 1:2:3 w lines"
    
       do j = 1, nproc - 1
          write(90,"(a)",advance='no')"&
-         & ,'"//outdir(1:5)//char(j+48)//"/"//which(k)//fin// &
+         & ,'"//outdir(1:5)//char(j+48)//"/"//fin// &
          & ".dat' u 1:2:3 w lines" 
-         write(90,"(a)",advance='no')"&
-         & ,'"//outdir(1:5)//char(j+48)//"/"//which(k)//fin// &
-         & ".dat' u 1:2:4 w lines"
       end do
       write(90,*)
-      !write(90,*)"set term gif"
-      !write(90,*)"set output 'image"//fin//".gif'"
-      !write(90,*)"replot"
       close(90)
    end do
 end if

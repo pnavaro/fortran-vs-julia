@@ -2,11 +2,11 @@ $donnees
   cfl    = 0.2 			!Courant-Friedrich-Levy
   tfinal = 1.			!final time
   nstepmax = 500                !max steps
-  idiag  = 1	   		!output period
+  idiag  = 10	   		!output period
   md = 2			!md : wave number x
   nd = 2			!nd : wave number y
-  nx = 1000			!x number of points
-  ny = 1000			!y number of points
+  nx = 100			!x number of points
+  ny = 100			!y number of points
   dimx = 1.0			!width
   dimy = 1.0			!height
 $end

@@ -40,3 +40,5 @@ maxyee
 data/
 image*.gif
 Manifest.toml
+maxwell_mpi_fortran
+maxwell_serial_fortran

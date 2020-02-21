@@ -1,5 +1,3 @@
-PROG = maxyee maxyee_par
-
 SRCS =	solveur_yee.F90 sorties.F90 commun.F90 
 OBJS =	solveur_yee.o sorties.o commun.o
 F90 = mpif90
@@ -7,13 +5,13 @@ OPT = -O3
 F90FLAGS = -cpp $(OPT) 
 LDFLAGS = $(OPT) 
 
-all: $(PROG)
+all: maxwell_serial_fortran maxwell_mpi_fortran
 
-maxyee: maxyee.o 
-	$(F90) $(LDFLAGS) -o $@ $(OBJS) maxyee.o $(LIBS)
+maxwell_serial_fortran: maxyee.o 
+	$(F90) $(LDFLAGS) -o $@ $(OBJS) $^ $(LIBS)
 
-maxyee_par: maxyee_mpi.o 
-	$(F90) $(LDFLAGS) -o $@ $(OBJS) maxyee_mpi.o $(LIBS)
+maxwell_mpi_fortran: maxyee_mpi.o 
+	$(F90) $(LDFLAGS) -o $@ $(OBJS) $^ $(LIBS)
 
 clean:
 	rm -rf $(PROG) *.o *.mod data/* *.gnu core error.* output.* *.a
