@@ -63,8 +63,8 @@ function main( nstep )
     nstepmax = 500  # max steps
     md = 2          # md : wave number x (initial condition)
     nd = 2          # nd : wave number y (initial condition)
-    nx = 1000       # x number of points
-    ny = 1000       # y number of points
+    nx = 100       # x number of points
+    ny = 100       # y number of points
     dimx = 1.0      # width
     dimy = 1.0      # height
 
@@ -96,8 +96,8 @@ function main( nstep )
     mx = nx ÷ nxp
     my = ny ÷ nyp
 
-    @assert nx % nxp == 0
-    @assert ny % nyp == 0
+    nx = mx * nxp
+    ny = my * nyp
 
     global_mesh = Mesh( dimx, nx, dimy, ny)
     dx, dy = global_mesh.dx, global_mesh.dy
@@ -134,13 +134,12 @@ function main( nstep )
        faraday!(fields, 1, mx, 1, my, dt)   
 
        # Send to North  and receive from South
-       MPI.Sendrecv!(fields.bz[ 1,   1:my+1], north, tag,
-                     fields.bz[mx+1, 1:my+1], south, tag, comm2d)
+       MPI.Sendrecv!(fields.bz[ 1,   1:end], north, tag,
+                     fields.bz[mx+1, 1:end], south, tag, comm2d)
     
        # Send to West and receive from East
-       MPI.Sendrecv!(fields.bz[1:mx+1,   1], west, tag,
-                     fields.bz[1:mx+1,my+1], east, tag, comm2d)
-    
+       MPI.Sendrecv!(fields.bz[1:end,   1], west, tag,
+                     fields.bz[1:end,my+1], east, tag, comm2d)
     
        # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
        # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]

@@ -4,6 +4,7 @@ const csq = c * c
 include("mesh.jl")
 include("fdtd.jl")
 
+
 function main( nstep )
 
     cfl    = 0.2    # Courant-Friedrich-Levy
@@ -11,8 +12,8 @@ function main( nstep )
     nstepmax = 500  # max steps
     md = 2	    # md : wave number x (initial condition)
     nd = 2	    # nd : wave number y (initial condition)
-    nx = 1000	    # x number of points
-    ny = 1000	    # y number of points
+    nx = 1200	    # x number of points
+    ny = 1200	    # y number of points
     dimx = 1.0	    # width
     dimy = 1.0	    # height
 
@@ -42,6 +43,7 @@ function main( nstep )
     
     tag = 1111
     
+
     for istep = 1:nstep # Loop over time
     
        # Ex(n) [1:nx]*[1:ny+1] --> B(n+1/2) [1:nx]*[1:ny]
@@ -53,21 +55,21 @@ function main( nstep )
 
        ampere_maxwell!(fields, 1, nx, 1, ny, dt) 
     
-       err_l2 = 0.0
-       time = (istep-0.5)*dt
-       for j = 1:ny, i = 1:nx
-           th_bz = (- cos(md*pi*((i-0.5)*dx/dimx))
-                    * cos(nd*pi*((j-0.5)*dy/dimy))
-                    * cos(omega*time))
-           err_l2 += (fields.bz[i,j] - th_bz)^2
-       end
-    
-       println(sqrt(err_l2))
     
     end # next time step
     
+    err_l2 = 0.0
+    time = (nstep-0.5)*dt
+    for j = 1:ny, i = 1:nx
+        th_bz = (- cos(md*pi*((i-0.5)*dx/dimx))
+                 * cos(nd*pi*((j-0.5)*dy/dimy))
+                 * cos(omega*time))
+        err_l2 += (fields.bz[i,j] - th_bz)^2
+    end
+    
+    return sqrt(err_l2)
 end
 
 main( 1 ) # trigger building
 
-@time main( 500 )
+@time println(main( 500 ))

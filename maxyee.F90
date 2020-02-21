@@ -61,19 +61,6 @@ do istep = 1, nstep !*** Loop over time
    !*** Calcul de E(t=n+1) sur les pts interieurs
    call ampere_maxwell(fields, 1, nx, 1, ny) 
 
-   !*** diagnostics ***
-   err_l2 = 0.0
-   do j = 1, ny
-   do i = 1, nx
-      th_bz = - cos(md*pi*(i-0.5)*dx/dimx)    &
-              * cos(nd*pi*(j-0.5)*dy/dimy)    &
-              * cos(omega*time)
-      err_l2 = err_l2 + (fields%bz(i,j) - th_bz)**2
-   end do
-   end do
-   write(*,"(10x,' istep = ',I6)",advance="no") istep
-   write(*,"(' time = ',e15.3,' sec')",advance="no") time
-   write(*,"(' erreur L2 = ',g10.5)") sqrt(err_l2)
 
    if (mod(istep,idiag) == 0.0) then
       iplot = iplot + 1
@@ -84,7 +71,21 @@ do istep = 1, nstep !*** Loop over time
 
 end do ! next time step
 
+err_l2 = 0.0
+do j = 1, ny
+do i = 1, nx
+   th_bz = - cos(md*pi*(i-0.5)*dx/dimx)    &
+           * cos(nd*pi*(j-0.5)*dy/dimy)    &
+           * cos(omega*(time-0.5*dt))
+   err_l2 = err_l2 + (fields%bz(i,j) - th_bz)**2
+end do
+end do
+
 call cpu_time(tcpu)
+
+write(*,"(10x,' istep = ',I6)",advance="no") istep
+write(*,"(' time = ',e15.3,' sec')",advance="no") time
+write(*,"(' erreur L2 = ',g10.5)") sqrt(err_l2)
 write(*,"(//10x,' Temps CPU = ', G15.3, ' sec' )") tcpu
 
 stop
