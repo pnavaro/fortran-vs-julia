@@ -1,7 +1,7 @@
 SRCS =	solveur_yee.F90 sorties.F90 commun.F90 
 OBJS =	solveur_yee.o sorties.o commun.o
 F90 = mpif90
-OPT = -O3
+OPT = -O0 -g -fbounds-check -O3
 F90FLAGS = -cpp $(OPT) 
 LDFLAGS = $(OPT) 
 

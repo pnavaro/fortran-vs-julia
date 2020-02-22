@@ -11,20 +11,18 @@ implicit none
 type(mesh_fields) :: fields
 integer :: i, j, iproc, istep, iplot
 real(8) :: tcpu1, tcpu2, time, err_l2, sum_l2, xp, yp
-real(8) :: x1, y1, dtloc
+real(8) :: x, y, dtloc
 real(8) :: th_bz
 integer,dimension(MPI_STATUS_SIZE) :: statut
-integer                  :: rang, nproc, code,comm2d
+integer                  :: rang, nproc, code, comm2d
 integer,parameter        :: tag=1111
 integer,dimension(8)     :: voisin
 integer,parameter        :: N =1, S =2, W =3, E =4
 integer,parameter        :: ndims = 2
 integer,dimension(ndims) :: dims, coords
-integer,dimension(ndims) :: coordsse, coordssw, coordsne, coordsnw
 logical                  :: reorder
 logical,dimension(ndims) :: periods
 integer                  :: nxp, nyp, mx, my
-integer                  :: type_ligne, type_colonne
 
 !Initialisation de MPI
 CALL MPI_INIT(code)
@@ -83,8 +81,8 @@ call MPI_BCAST(nstepmax,1,MPI_INTEGER,   0,comm2d,code)
 nstep = floor(tfinal/dt)
 if( nstep > nstepmax ) nstep = nstepmax
 
-allocate(fields%ex(mx+1,my+1)); fields%ex(:,:) = 0.0d0
-allocate(fields%ey(mx+1,my+1)); fields%ey(:,:) = 0.0d0
+allocate(fields%ex(mx,my+1)); fields%ex(:,:) = 0.0d0
+allocate(fields%ey(mx+1,my)); fields%ey(:,:) = 0.0d0
 allocate(fields%bz(mx+1,my+1)); fields%bz(:,:) = 0.0d0
 
 xp = dble(coords(1))/nxp * dimx 
@@ -102,24 +100,19 @@ call MPI_BARRIER(MPI_COMM_WORLD, code)
 time  = 0.
 iplot = 0
 
-!type colonne
-CALL MPI_TYPE_CONTIGUOUS(mx+1,MPI_REAL8,type_colonne,code)
-CALL MPI_TYPE_COMMIT(type_colonne,code)
-!type ligne
-CALL MPI_TYPE_VECTOR(my+1,1,mx+1,MPI_REAL8,type_ligne,code)
-CALL MPI_TYPE_COMMIT(type_ligne,code)
-
 !Initialisation des champs 
 fields%ex(:,:) = 0d0; fields%ey(:,:) = 0d0; fields%bz(:,:) = 0d0
 
-xp = dble(coords(1))/nxp * dimx 
-yp = dble(coords(2))/nyp * dimy 
+xp = coords(1) * dimx /nxp
+yp = coords(2) * dimy /nyp
 
 omega = c * sqrt((md*pi/dimx)**2+(nd*pi/dimy)**2)
 do j=1,my
    do i=1,mx
-      fields%bz(i,j) = - cos(md*pi*(xp+(i-0.5)*dx/dimx))  &
-                       * cos(nd*pi*(yp+(j-0.5)*dy/dimy))  &
+      x = xp + (i-.5) * dx
+      y = yp + (j-.5) * dy
+      fields%bz(i,j) = - cos(md*pi*x/dimx)  &
+                       * cos(nd*pi*y/dimy)  &
                        * cos(omega*(-0.5*dt))
    end do  
 end do  
@@ -132,13 +125,13 @@ do istep = 1, nstep !*** Loop over time
    time = time + 0.5*dt
 
    !Envoi au voisin N et reception du voisin S
-   CALL MPI_SENDRECV(fields%bz(   1,  1),1,type_ligne,voisin(N),tag, 	&
-                     fields%bz(mx+1,  1),1,type_ligne,voisin(S),tag, 	&
+   CALL MPI_SENDRECV(fields%bz(   1,  :), my+1,MPI_REAL8,voisin(N),tag, 	&
+                     fields%bz(mx+1,  :), my+1,MPI_REAL8,voisin(S),tag, 	&
                      comm2d, statut, code)
 
    !Envoi au voisin W et reception du voisin E
-   CALL MPI_SENDRECV(fields%bz(   1,   1),1,type_colonne,voisin(W),tag,	&
-                     fields%bz(   1,my+1),1,type_colonne,voisin(E),tag,	&
+   CALL MPI_SENDRECV(fields%bz(   :,   1), mx+1,MPI_REAL8,voisin(W),tag,	&
+                     fields%bz(   :,my+1), mx+1,MPI_REAL8,voisin(E),tag,	&
                      comm2d, statut, code)
 
    !Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
@@ -146,13 +139,13 @@ do istep = 1, nstep !*** Loop over time
    call ampere_maxwell(fields, 1, mx, 1, my) 
 
    !Envoi au voisin E et reception du voisin W
-   CALL MPI_SENDRECV(fields%ex(   1,my+1),1,type_colonne,voisin(E),tag,	&
-                     fields%ex(   1,   1),1,type_colonne,voisin(W),tag,	&
+   CALL MPI_SENDRECV(fields%ex(   :,my+1), mx, MPI_REAL8,voisin(E),tag,	&
+                     fields%ex(   :,   1), mx, MPI_REAL8,voisin(W),tag,	&
                      comm2d, statut, code)
 
    !Envoi au voisin S et reception du voisin N
-   CALL MPI_SENDRECV(fields%ey(mx+1,   1),1,type_ligne,voisin(S),tag, 	&
-                     fields%ey(   1,   1),1,type_ligne,voisin(N),tag, 	&
+   CALL MPI_SENDRECV(fields%ey(mx+1,   :), my, MPI_REAL8,voisin(S),tag, 	&
+                     fields%ey(   1,   :), my, MPI_REAL8,voisin(N),tag, 	&
                      comm2d, statut, code)
 
 
@@ -163,8 +156,10 @@ do istep = 1, nstep !*** Loop over time
    err_l2 = 0.0
    do j = 1, my
        do i = 1, mx
-          th_bz = - cos(md*pi*(xp+(i-0.5)*dx/dimx))  &
-                  * cos(nd*pi*(yp+(j-0.5)*dy/dimy))  &
+          x = xp + (i-.5) * dx
+          y = yp + (j-.5) * dy
+          th_bz = - cos(md*pi*x/dimx)  &
+                  * cos(nd*pi*y/dimy)  &
                   * cos(omega*time)
           err_l2 = err_l2 + (fields%bz(i,j) - th_bz)**2
        end do
