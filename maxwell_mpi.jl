@@ -48,16 +48,15 @@ end
 
 function ampere_maxwell!( fields, dt )
 
-    @show dx, dy = fields.mesh.dx, fields.mesh.dy
-    @show nx, ny = fields.mesh.nx, fields.mesh.ny
-    @show csq, dt
+    dx, dy = fields.mesh.dx, fields.mesh.dy
+    nx, ny = fields.mesh.nx, fields.mesh.ny
 
-    for j=2:ny+1, i=1:nx
+    for j=2:ny, i=1:nx
        dbz_dy = (fields.bz[i,j]-fields.bz[i,j-1]) / dy
        fields.ex[i,j] = fields.ex[i,j] + dt*csq*dbz_dy 
     end
 
-    for j=1:ny, i=2:nx+1
+    for j=1:ny, i=2:nx
        dbz_dx = (fields.bz[i,j]-fields.bz[i-1,j]) / dx
        fields.ey[i,j] = fields.ey[i,j] - dt*csq*dbz_dx 
     end
@@ -101,10 +100,10 @@ function main( nstep )
     
     nxp, nyp = dims
 
-    @show mx = nx ÷ nxp
-    @show my = ny ÷ nyp
+    mx = nx ÷ nxp
+    my = ny ÷ nyp
 
-    @show dx, dy = dimx / nx, dimy / ny
+    dx, dy = dimx / nx, dimy / ny
 
     dt = cfl / sqrt(1/dx^2+1/dy^2) / c
     
@@ -113,8 +112,8 @@ function main( nstep )
     MPI.Barrier(comm)
     
     # Origin of local mesh
-    @show xp = coords[1] * dimx / nyp
-    @show yp = coords[2] * dimy / nyp
+    xp = coords[1] * dimx / nyp
+    yp = coords[2] * dimy / nyp
 
     mesh = Mesh( mx, dx, my, dy)
 
@@ -137,18 +136,6 @@ function main( nstep )
 
        faraday!(fields, dt)   
 
-       err_l2 = 0.0
-       time = (istep-0.5)*dt
-       for j = 1:my, i = 1:mx
-           x = xp+(i-0.5)*dx 
-           y = yp+(j-0.5)*dy
-           th_bz = (- cos(md*pi*x/dimx)
-                    * cos(nd*pi*y/dimy)
-                    * cos(omega*time))
-           err_l2 += (fields.bz[i,j] - th_bz)^2
-       end
-
-       @show err_l2
 
        # Send to North  and receive from South
        MPI.Sendrecv!(fields.bz[ 1,   :], north, tag,
@@ -178,7 +165,20 @@ function main( nstep )
     
     MPI.Barrier(comm)
 
-    return true
+    err_l2 = 0.0
+    time = (nstep-0.5)*dt
+    for j = 1:my, i = 1:mx
+        x = xp+(i-0.5)*dx 
+        y = yp+(j-0.5)*dy
+        th_bz = (- cos(md*pi*x/dimx)
+                 * cos(nd*pi*y/dimy)
+                 * cos(omega*time))
+        err_l2 += (fields.bz[i,j] - th_bz)^2
+    end
+
+    sum_err_l2 = MPI.Allreduce(err_l2, +, comm2d)
+
+    return sqrt(sum_err_l2)
 
 end
 
@@ -186,10 +186,13 @@ end
 MPI.Init()
 tbegin = MPI.Wtime()
 
-println(main(10))
+err_l2 = main(10)
 
 tend = MPI.Wtime()
 
-println(" time : $(tend -tbegin) ")
+if MPI.Comm_rank(MPI.COMM_WORLD) == 0
+   println(" error : $(err_l2) ")
+   println(" time : $(tend -tbegin) ")
+end
 
 MPI.Finalize()
