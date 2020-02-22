@@ -23,8 +23,8 @@ struct MeshFields
     function MeshFields( mesh )
 
         nx, ny = mesh.nx, mesh.ny
-        ex = zeros(Float64, (nx+1,ny+1))
-        ey = zeros(Float64, (nx+1,ny+1))
+        ex = zeros(Float64, (nx,ny+1))
+        ey = zeros(Float64, (nx+1,ny))
         bz = zeros(Float64, (nx+1,ny+1))
         new( mesh, ex, ey, bz)
 
@@ -48,8 +48,9 @@ end
 
 function ampere_maxwell!( fields, dt )
 
-    dx, dy = fields.mesh.dx, fields.mesh.dy
-    nx, ny = fields.mesh.nx, fields.mesh.ny
+    @show dx, dy = fields.mesh.dx, fields.mesh.dy
+    @show nx, ny = fields.mesh.nx, fields.mesh.ny
+    @show csq, dt
 
     for j=2:ny+1, i=1:nx
        dbz_dy = (fields.bz[i,j]-fields.bz[i,j-1]) / dy
@@ -63,55 +64,6 @@ function ampere_maxwell!( fields, dt )
 
 end 
 
-function plot_fields(mesh, rank, proc, field, xp, yp, iplot )
-
-    dx, dy = mesh.dx, mesh.dy
-    ix, jx = 1, mesh.mx
-    iy, jy = 1, mesh.my
-
-    if iplot == 1
-        mkpath("data/$rank")
-    end
-
-    io = open("data/$(rank)/$(iplot)", "w")
-    for j=iy:jy
-        for i=ix:jx
-            @printf( io, "%f %f %f \n", xp+(i-0.5)*dx, yp+(j-1)*dy, field[i,j])
-        end
-        @printf( io, "\n")
-    end
-    close(io)
-   
-    # write master file
-
-    if rank == 0
-
-      if iplot == 1 
-         io = open( "field.gnu", "w" )
-         write(io, "set xr[-0.1:1.1]\n")
-         write(io, "set yr[-0.1:1.1]\n")
-         write(io, "set zr[-1.1:1.1]\n")
-         write(io, "set surf\n")
-      else
-         io = open( "field.gnu", "a" )
-      end
-      write(io, "set title '$(iplot)' \n")
-      write(io, "splot 'data/$(rank)/$(iplot)' u 1:2:3 w lines")
-   
-      for p = 1:proc-1
-         write(io, ", 'data/$(p)/$(iplot)' u 1:2:3 w lines")
-      end
-      write( io, "\n")
-      write( io, "set term gif \n")
-      write( io, "set output 'image$(lpad(iplot,3,"0")).gif'\n")
-      write( io, "replot\n")
-
-      close(io)
-
-    end
-
-end 
-
 function main( nstep )
 
     cfl    = 0.2    # Courant-Friedrich-Levy
@@ -119,10 +71,10 @@ function main( nstep )
     nstepmax = 500  # max steps
     md = 2          # md : wave number x (initial condition)
     nd = 2          # nd : wave number y (initial condition)
-    nx = 1200       # x number of points
-    ny = 1200       # y number of points
-    dimx = 1.2      # width
-    dimy = 1.2      # height
+    nx = 100       # x number of points
+    ny = 100       # y number of points
+    dimx = 10.0      # width
+    dimy = 10.0      # height
 
     comm = MPI.COMM_WORLD
     proc = MPI.Comm_size(comm)
@@ -149,10 +101,10 @@ function main( nstep )
     
     nxp, nyp = dims
 
-    mx = nx ÷ nxp
-    my = ny ÷ nyp
+    @show mx = nx ÷ nxp
+    @show my = ny ÷ nyp
 
-    dx, dy = dimx / nx, dimy / ny
+    @show dx, dy = dimx / nx, dimy / ny
 
     dt = cfl / sqrt(1/dx^2+1/dy^2) / c
     
@@ -161,8 +113,8 @@ function main( nstep )
     MPI.Barrier(comm)
     
     # Origin of local mesh
-    xp = coords[1]/nxp * dimx 
-    yp = coords[2]/nyp * dimy 
+    @show xp = coords[1] * dimx / nyp
+    @show yp = coords[2] * dimy / nyp
 
     mesh = Mesh( mx, dx, my, dy)
 
@@ -170,9 +122,11 @@ function main( nstep )
     
     omega = c * sqrt((md*pi/dimx)^2+(nd*pi/dimy)^2)
     for j=1:my, i=1:mx
-        fields.bz[i,j] = (- cos(md*pi*(xp+(i-0.5)*dx/dimx)) 
-                          * cos(nd*pi*(yp+(j-0.5)*dy/dimy))
-                          * cos(omega*(-0.5*dt)) )
+        x = xp+(i-0.5)*dx 
+        y = yp+(j-0.5)*dy
+        fields.bz[i,j] = (- cos(md*pi*x/dimx) 
+                          * cos(nd*pi*y/dimy)
+                          * cos(omega*0.5*dt) )
     end  
     
     tag = 1111
@@ -183,6 +137,19 @@ function main( nstep )
 
        faraday!(fields, dt)   
 
+       err_l2 = 0.0
+       time = (istep-0.5)*dt
+       for j = 1:my, i = 1:mx
+           x = xp+(i-0.5)*dx 
+           y = yp+(j-0.5)*dy
+           th_bz = (- cos(md*pi*x/dimx)
+                    * cos(nd*pi*y/dimy)
+                    * cos(omega*time))
+           err_l2 += (fields.bz[i,j] - th_bz)^2
+       end
+
+       @show err_l2
+
        # Send to North  and receive from South
        MPI.Sendrecv!(fields.bz[ 1,   :], north, tag,
                      fields.bz[mx+1, :], south, tag, comm2d)
@@ -191,8 +158,8 @@ function main( nstep )
        MPI.Sendrecv!(fields.bz[ :,   1], west, tag,
                      fields.bz[ :,my+1], east, tag, comm2d)
     
-       # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
-       # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]
+       # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my+1]
+       # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx+1]*[1:my]
 
        ampere_maxwell!(fields, dt) 
     
@@ -205,33 +172,21 @@ function main( nstep )
                      fields.ey[    1, :], north, tag, comm2d)
     
        #plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )
+        
     
     end # next time step
     
     MPI.Barrier(comm)
 
-    err_l2 = 0.0
-    time = (nstep-0.5)*dt
-    for j = 1:my, i = 1:mx
-        th_bz = (- cos(md*pi*(xp+(i-0.5)*dx/dimx))
-                 * cos(nd*pi*(yp+(j-0.5)*dy/dimy))
-                 * cos(omega*time))
-        err_l2 += (fields.bz[i,j] - th_bz)^2
-    end
-    
-    sum_err_l2 = MPI.Allreduce(err_l2, +, comm2d)
-
-    return sqrt(sum_err_l2)
+    return true
 
 end
 
+
 MPI.Init()
-
-main( 1 ) # trigger building
-
 tbegin = MPI.Wtime()
 
-println(main(1000))
+println(main(10))
 
 tend = MPI.Wtime()
 
