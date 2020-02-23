@@ -5,8 +5,8 @@ $donnees
   idiag  = 10000	!output period
   md = 2			!md : wave number x
   nd = 2			!nd : wave number y
-  nx = 1000			!x number of points
-  ny = 1000			!y number of points
-  dimx = 10			!width
-  dimy = 10			!height
+  nx = 1200			!x number of points
+  ny = 1200			!y number of points
+  dimx = 12			!width
+  dimy = 12			!height
 $end
