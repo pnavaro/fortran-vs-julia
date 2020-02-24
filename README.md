@@ -22,7 +22,7 @@ gnuplot Bz.gnu
 Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
 
 ```
-$ mpirun --oversubscribe -np 4 julia --project hello_mpi.jl
+$ mpirun -np 4 julia --project hello_mpi.jl
 Hello world, I am 0 of 4
 Hello world, I am 3 of 4
 Hello world, I am 1 of 4
