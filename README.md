@@ -2,26 +2,7 @@
 
 We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology
 
-## Build and run
-```
-make
-mpirun -np 4 ./maxyee_par 
-```
-You can modify `Makefile` and `input_data`.
-
-NB: A sequential version is also built named `maxyee`
-
-## Plot the magnetic field
-
-Uncomment the plot_fields call in Julia programs or change idiag value in input_data for fortran.
-
-```
-gnuplot Bz.gnu
-```
-![](bz_field.gif)
-
 ## Julia version
-
 Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
 
 ```
@@ -31,8 +12,6 @@ Hello world, I am 3 of 4
 Hello world, I am 1 of 4
 Hello world, I am 2 of 4
 ```
-
-
 # Performances (without disk IO)
 
 On small program like this Julia is really fast.
@@ -48,3 +27,12 @@ On small program like this Julia is really fast.
 
 - `make && time mpirun -np 9 ./maxwell_mpi_fortran` : 7 seconds 
 - `mpirun -np 9 julia --project -O3 --check-bounds=no ` : 5 seconds
+
+## Plot the magnetic field
+
+Uncomment the plot_fields call in Julia programs or change idiag value in input_data for fortran.
+
+```
+gnuplot bz.gnu
+```
+![](bz_field.gif)
