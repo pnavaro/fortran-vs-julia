@@ -2,7 +2,6 @@
 
 We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology
 
-## Julia version
 Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
 
 ```
