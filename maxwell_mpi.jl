@@ -72,8 +72,8 @@ function main( nstep )
     nstepmax = 1000 # max steps
     md = 2          # md : wave number x (initial condition)
     nd = 2          # nd : wave number y (initial condition)
-    nx = 300        # x number of points
-    ny = 300        # y number of points
+    nx = 1200       # x number of points
+    ny = 1200       # y number of points
     dx = 0.01       # width
     dy = 0.01       # height
     dimx = nx * dx
@@ -160,7 +160,7 @@ function main( nstep )
        MPI.Sendrecv!(view(fields.ey, mx+1, :), south, tag,
                      view(fields.ey,    1, :), north, tag, comm2d)
     
-       plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )
+       # plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )
         
     
     end # next time step
@@ -197,7 +197,8 @@ end
 MPI.Init()
 tbegin = MPI.Wtime()
 
-err_l2 = main(500)
+err_l2 = main(1)
+@time err_l2 = main(1000)
 
 tend = MPI.Wtime()
 

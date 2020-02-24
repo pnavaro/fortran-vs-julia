@@ -7,15 +7,15 @@ include("fdtd.jl")
 
 function main( nstep )
 
-    cfl    = 0.1     # Courant-Friedrich-Levy
-    tfinal = 10.     # final time
-    nstepmax = 1000  # max steps
-    md = 2	     # md : wave number x (initial condition)
-    nd = 2	     # nd : wave number y (initial condition)
-    nx = 1200	     # x number of points
-    ny = 1200	     # y number of points
-    dimx = 1.0	     # width
-    dimy = 1.0	     # height
+    @show cfl    = 0.1     # Courant-Friedrich-Levy
+    @show tfinal = 10.     # final time
+    @show nstepmax = 1000  # max steps
+    @show md = 2	     # md : wave number x (initial condition)
+    @show nd = 2	     # nd : wave number y (initial condition)
+    @show nx = 1200	     # x number of points
+    @show ny = 1200	     # y number of points
+    @show dimx = 1.0	     # width
+    @show dimy = 1.0	     # height
 
     dx = dimx / nx
     dy = dimy / ny

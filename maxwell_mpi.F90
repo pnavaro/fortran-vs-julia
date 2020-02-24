@@ -1,10 +1,8 @@
 program maxyee_mpi
 
 use mpi
-
 use commun
 use sorties
-use solveur_yee
 
 implicit none
 
@@ -23,6 +21,10 @@ integer,dimension(ndims) :: dims, coords
 logical                  :: reorder
 logical,dimension(ndims) :: periods
 integer                  :: nxp, nyp, mx, my
+real(8) :: dex_dx, dey_dy
+real(8) :: dex_dy, dey_dx
+real(8) :: dbz_dx, dbz_dy
+integer :: type_ligne, type_colonne
 
 !Initialisation de MPI
 CALL MPI_INIT(code)
@@ -81,18 +83,27 @@ call MPI_BCAST(nstepmax,1,MPI_INTEGER,   0,comm2d,code)
 nstep = floor(tfinal/dt)
 if( nstep > nstepmax ) nstep = nstepmax
 
-allocate(fields%ex(mx,my+1)); fields%ex(:,:) = 0.0d0
-allocate(fields%ey(mx+1,my)); fields%ey(:,:) = 0.0d0
+allocate(fields%ex(mx+1,my+1)); fields%ex(:,:) = 0.0d0
+allocate(fields%ey(mx+1,my+1)); fields%ey(:,:) = 0.0d0
 allocate(fields%bz(mx+1,my+1)); fields%bz(:,:) = 0.0d0
 
-xp = dble(coords(1))/nxp * dimx 
-yp = dble(coords(2))/nyp * dimy 
+xp = coords(1) * dimx / nxp
+yp = coords(2) * dimy / nyp
 
 print*, "proc= ",rang,": ",mx,"x",my," mes coords sont ",coords(:)
 print*, "proc= ",rang,": (xp,yp) = (",sngl(xp),";", sngl(yp), ")"
 print*, "proc= ",rang,": mes voisins sont ", voisin(1:4)
 print*, "proc= ",rang,": Nombre d'iteration nstep = ", nstep
 print*, "proc= ",rang,": dx = ", sngl(dx), " dy = ", sngl(dy), " dt = ", sngl(dt)
+
+
+!type colonne
+CALL MPI_TYPE_CONTIGUOUS(mx+1,MPI_REAL8,type_colonne,code)
+CALL MPI_TYPE_COMMIT(type_colonne,code)
+!type ligne
+CALL MPI_TYPE_VECTOR(my+1,1,mx+1,MPI_REAL8,type_ligne,code)
+CALL MPI_TYPE_COMMIT(type_ligne,code)
+
 
 CALL FLUSH(6)
 call MPI_BARRIER(MPI_COMM_WORLD, code)
@@ -120,34 +131,52 @@ end do
 do istep = 1, nstep !*** Loop over time
 
    !E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
-   call faraday(fields, 1, mx, 1, my)   
+
+    do j=1,my
+    do i=1,mx
+       dex_dy     = (fields%ex(i,j+1)-fields%ex(i,j)) / dy
+       dey_dx     = (fields%ey(i+1,j)-fields%ey(i,j)) / dx
+       fields%bz(i,j) = fields%bz(i,j) + dt * (dex_dy - dey_dx)
+    end do
+    end do
 
    time = time + 0.5*dt
 
-   !Envoi au voisin N et reception du voisin S
-   CALL MPI_SENDRECV(fields%bz(   1,  :), my+1,MPI_REAL8,voisin(N),tag, 	&
-                     fields%bz(mx+1,  :), my+1,MPI_REAL8,voisin(S),tag, 	&
+   CALL MPI_SENDRECV(fields%bz(   1,  1),1,type_ligne,voisin(N),tag, 	&
+                     fields%bz(mx+1,  1),1,type_ligne,voisin(S),tag, 	&
                      comm2d, statut, code)
 
-   !Envoi au voisin W et reception du voisin E
-   CALL MPI_SENDRECV(fields%bz(   :,   1), mx+1,MPI_REAL8,voisin(W),tag,	&
-                     fields%bz(   :,my+1), mx+1,MPI_REAL8,voisin(E),tag,	&
+   CALL MPI_SENDRECV(fields%bz(   1,   1),1,type_colonne,voisin(W),tag,	&
+                     fields%bz(   1,my+1),1,type_colonne,voisin(E),tag,	&
                      comm2d, statut, code)
+
 
    !Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my]
    !Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx]*[1:my]
-   call ampere_maxwell(fields, 1, mx, 1, my) 
+   do j=2,my+1
+   do i=1,mx
+      dbz_dy = (fields%bz(i,j)-fields%bz(i,j-1)) / dy
+      fields%ex(i,j) = fields%ex(i,j) + dt*csq*dbz_dy 
+   end do
+   end do
+   
+   do j=1,my
+   do i=2,mx+1
+      dbz_dx = (fields%bz(i,j)-fields%bz(i-1,j)) / dx
+      fields%ey(i,j) = fields%ey(i,j) - dt*csq*dbz_dx 
+   end do
+   end do
 
    !Envoi au voisin E et reception du voisin W
-   CALL MPI_SENDRECV(fields%ex(   :,my+1), mx, MPI_REAL8,voisin(E),tag,	&
-                     fields%ex(   :,   1), mx, MPI_REAL8,voisin(W),tag,	&
+
+   CALL MPI_SENDRECV(fields%ex(   1,my+1),1,type_colonne,voisin(E),tag, &
+                     fields%ex(   1,   1),1,type_colonne,voisin(W),tag, &
                      comm2d, statut, code)
 
-   !Envoi au voisin S et reception du voisin N
-   CALL MPI_SENDRECV(fields%ey(mx+1,   :), my, MPI_REAL8,voisin(S),tag, 	&
-                     fields%ey(   1,   :), my, MPI_REAL8,voisin(N),tag, 	&
+   !!Envoi au voisin S et reception du voisin N
+   CALL MPI_SENDRECV(fields%ey(mx+1,   1),1,type_ligne,voisin(S),tag, &
+                     fields%ey(   1,   1),1,type_ligne,voisin(N),tag, &
                      comm2d, statut, code)
-
 
    !-----------------------------------------------------------!
    !    Sorties graphiques (les champs sont connus au temps n) ! 
@@ -165,15 +194,8 @@ do istep = 1, nstep !*** Loop over time
        end do
    end do
 
-   call MPI_REDUCE (err_l2,sum_l2,1,MPI_REAL8,MPI_SUM,0,comm2d,code)
 
-   if (rang == 0) then
-       write(*,"(10x,' istep = ',I6)",advance="no") istep
-       write(*,"(' time = ',e17.3,' ns')",advance="no") time
-       write(*,"(' erreur L2 = ',g10.3)") sqrt(sum_l2)
-   end if
-
-   if ( istep==1 .or. mod(istep,idiag) == 0.0) then
+   if ( mod(istep,idiag) == 0.0) then
       iplot = iplot + 1
       call plot_fields(rang, nproc, fields, 1, mx, 1, my, xp, yp, iplot, time )
    end if
@@ -181,6 +203,14 @@ do istep = 1, nstep !*** Loop over time
    time = time + 0.5*dt
 
 end do ! next time step
+
+call MPI_REDUCE (err_l2,sum_l2,1,MPI_REAL8,MPI_SUM,0,comm2d,code)
+
+if (rang == 0) then
+    write(*,"(10x,' istep = ',I6)",advance="no") istep
+    write(*,"(' time = ',e17.3,' ns')",advance="no") time
+    write(*,"(' erreur L2 = ',g10.3)") sqrt(sum_l2)
+end if
 
 call FLUSH(6)
 call MPI_BARRIER(MPI_COMM_WORLD, code)

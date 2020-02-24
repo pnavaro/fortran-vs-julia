@@ -1,7 +1,7 @@
 $donnees 
-  cfl    = 0.1 		!Courant-Friedrich-Levy
-  tfinal = 10.		!final time
-  nstepmax = 10     !max steps
+  cfl    = 0.1 	     !Courant-Friedrich-Levy
+  tfinal = 100.	     !final time
+  nstepmax = 1000    !max steps
   idiag  = 10000	!output period
   md = 2			!md : wave number x
   nd = 2			!nd : wave number y

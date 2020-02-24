@@ -68,6 +68,7 @@ subroutine cl_periodiques(tm, ix, jx, iy, jy)
 type( mesh_fields ) :: tm
 integer, intent(in) :: ix, jx, iy, jy
 
+
 do i = ix, jx
    dbz_dy = (tm%bz(i,iy)-tm%bz(i,jy)) / dy
    tm%ex(i,iy) = tm%ex(i,iy) + dt*csq*dbz_dy 

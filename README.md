@@ -13,9 +13,12 @@ NB: A sequential version is also built named `maxyee`
 
 ## Plot the magnetic field
 
+Uncomment the plot_fields call in Julia programs or change idiag value in input_data for fortran.
+
 ```
 gnuplot Bz.gnu
 ```
+![](bz_field.gif)
 
 ## Julia version
 
@@ -29,24 +32,19 @@ Hello world, I am 1 of 4
 Hello world, I am 2 of 4
 ```
 
-Run the maxwell simulation
 
-```
-mpirun -np 4 julia --project main.jl
-```
+# Performances (without disk IO)
 
-![](bz_field.gif)
-
-# Performances
+On small program like this Julia is really fast.
 
 ## Serial computation
 
-1200 x 1200 and 1000 iterations.
+### 1200 x 1200 and 1000 iterations.
 
-- `julia -O3 --check-bounds=no maxwell_serial.jl` : 7.8 seconds
-- `gfortran -O3` : 8.8 seconds 
+- `julia -O3 --check-bounds=no maxwell_serial.jl` : 14 seconds
+- `make && time ./maxwell_serial_fortran` : 31 seconds 
 
-1200 x 1200 on 4 processors and 500 iterations
+### 1200 x 1200 on 9 processors and 1000 iterations
 
-- `gfortran -O3` : 22 seconds 
-- `julia -O3 --check-bounds=no MPI` : 5 seconds
+- `make && time mpirun -np 9 ./maxwell_mpi_fortran` : 7 seconds 
+- `mpirun -np 9 julia --project -O3 --check-bounds=no ` : 5 seconds
