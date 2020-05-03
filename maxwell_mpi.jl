@@ -51,29 +51,33 @@ function ampere_maxwell!( fields, dt )
     dx, dy = fields.mesh.dx, fields.mesh.dy
     nx, ny = fields.mesh.nx, fields.mesh.ny
 
-    for j=2:ny, i=1:nx
+    for j=2:ny+1, i=1:nx
        dbz_dy = (fields.bz[i,j]-fields.bz[i,j-1]) / dy
        fields.ex[i,j] = fields.ex[i,j] + dt*csq*dbz_dy 
     end
 
-    for j=1:ny, i=2:nx
+    for j=1:ny, i=2:nx+1
        dbz_dx = (fields.bz[i,j]-fields.bz[i-1,j]) / dx
        fields.ey[i,j] = fields.ey[i,j] - dt*csq*dbz_dx 
     end
 
 end 
 
+include("plot_mpi.jl")
+
 function main( nstep )
 
-    cfl    = 0.2    # Courant-Friedrich-Levy
+    cfl    = 0.4    # Courant-Friedrich-Levy
     tfinal = 1.	    # final time
-    nstepmax = 500  # max steps
+    nstepmax = 1000 # max steps
     md = 2          # md : wave number x (initial condition)
     nd = 2          # nd : wave number y (initial condition)
-    nx = 100       # x number of points
-    ny = 100       # y number of points
-    dimx = 10.0      # width
-    dimy = 10.0      # height
+    nx = 1200       # x number of points
+    ny = 1200       # y number of points
+    dx = 0.01       # width
+    dy = 0.01       # height
+    dimx = nx * dx
+    dimy = ny * dy
 
     comm = MPI.COMM_WORLD
     proc = MPI.Comm_size(comm)
@@ -102,8 +106,6 @@ function main( nstep )
 
     mx = nx ÷ nxp
     my = ny ÷ nyp
-
-    dx, dy = dimx / nx, dimy / ny
 
     dt = cfl / sqrt(1/dx^2+1/dy^2) / c
     
@@ -138,12 +140,12 @@ function main( nstep )
 
 
        # Send to North  and receive from South
-       MPI.Sendrecv!(fields.bz[ 1,   :], north, tag,
-                     fields.bz[mx+1, :], south, tag, comm2d)
+       MPI.Sendrecv!(view(fields.bz, 1,   1:my), north, tag,
+                     view(fields.bz, mx+1, 1:my), south, tag, comm2d)
     
        # Send to West and receive from East
-       MPI.Sendrecv!(fields.bz[ :,   1], west, tag,
-                     fields.bz[ :,my+1], east, tag, comm2d)
+       MPI.Sendrecv!(view(fields.bz, 1:mx,   1), west, tag,
+                     view(fields.bz, 1:mx,my+1), east, tag, comm2d)
     
        # Bz(n+1/2) [1:mx]*[1:my] --> Ex(n+1) [1:mx]*[2:my+1]
        # Bz(n+1/2) [1:mx]*[1:my] --> Ey(n+1) [2:mx+1]*[1:my]
@@ -151,19 +153,18 @@ function main( nstep )
        ampere_maxwell!(fields, dt) 
     
        # Send to East and receive from West
-       MPI.Sendrecv!(fields.ex[ :, my+1], east, tag,
-                     fields.ex[ :,    1], west, tag, comm2d)
+       MPI.Sendrecv!(view(fields.ex, :, my+1), east, tag,
+                     view(fields.ex, :,    1), west, tag, comm2d)
     
        # Send to South and receive from North
-       MPI.Sendrecv!(fields.ey[ mx+1, :], south, tag,
-                     fields.ey[    1, :], north, tag, comm2d)
+       MPI.Sendrecv!(view(fields.ey, mx+1, :), south, tag,
+                     view(fields.ey,    1, :), north, tag, comm2d)
     
-       #plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )
+       # plot_fields(mesh, rank, proc, fields.bz, xp, yp, istep )
         
     
     end # next time step
     
-    MPI.Barrier(comm)
 
     err_l2 = 0.0
     time = (nstep-0.5)*dt
@@ -176,6 +177,16 @@ function main( nstep )
         err_l2 += (fields.bz[i,j] - th_bz)^2
     end
 
+    for k in 0:proc-1
+         if rank == k 
+              println("----")
+              println("$rank : $mx, $my  $err_l2 ")
+              println("$rank : $dx, $dy  $err_l2 ")
+         end
+         MPI.Barrier(comm)
+    end
+    
+
     sum_err_l2 = MPI.Allreduce(err_l2, +, comm2d)
 
     return sqrt(sum_err_l2)
@@ -186,7 +197,8 @@ end
 MPI.Init()
 tbegin = MPI.Wtime()
 
-err_l2 = main(10)
+err_l2 = main(1)
+@time err_l2 = main(1000)
 
 tend = MPI.Wtime()
 
