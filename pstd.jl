@@ -1,29 +1,66 @@
 using FFTW
 
-function faraday!( bz, mesh :: Mesh, ex, ey, dt )
 
-    nx, ny = mesh.nx, mesh.ny
-    lx, ly = mesh.dimx, mesh.dimy
-    kx = 2π ./ lx .* vcat(0:nx÷2-1,-nx÷2:-1)
-    ky = 2π ./ ly .* vcat(0:ny÷2-1,-ny÷2:-1)
+struct PSTD
 
-    dex_dy = ifft( 1im .* ky .* fft( ex, 2), 2)
-    dey_dx = ifft( 1im .* kx .* fft( ey, 1), 1)
-    bz .= bz .+ dt .* (dex_dy .- dey_dx)
+    kx 
+    ky 
+    dx :: Array{ComplexF64, 2}
+    dy :: Array{ComplexF64, 2}
+
+   function PSTD( mesh )
+
+        nx, ny = mesh.nx, mesh.ny
+
+        kx = 2π ./ mesh.dimx .* vcat(0:nx÷2-1,-nx÷2:-1)
+        ky = 2π ./ mesh.dimy .* vcat(0:ny÷2-1,-ny÷2:-1) |> transpose
+
+        dx = zeros(ComplexF64, (nx, ny))
+        dy = zeros(ComplexF64, (nx, ny))
+
+        new( kx, ky, dx, dy)
+
+    end
 
 end
 
-function ampere_maxwell!( ex, ey, mesh :: Mesh, bz, dt )
+function faraday!( bz, pstd, ex, ey, dt )
 
-    nx, ny = mesh.nx, mesh.ny
-    lx, ly = mesh.dimx, mesh.dimy
-    kx = 2π ./ lx .* vcat(0:nx÷2-1,-nx÷2:-1)
-    ky = 2π ./ ly .* vcat(0:ny÷2-1,-ny÷2:-1)
+    pstd.dy .= ex
+    fft!(pstd.dy, 2)
+    pstd.dy .*= 1im .* pstd.ky
+    ifft!(pstd.dy, 2)
 
-    dbz_dy = ifft( 1im .* ky .* fft( bz, 2), 2)
-    ex .= ex .+ dt .* csq .* dbz_dy 
+    pstd.dx .= ey
+    fft!(pstd.dx, 1)
+    pstd.dx .*= 1im .* pstd.kx
+    ifft!(pstd.dx, 1)
 
-    dbz_dx = ifft( 1im .* kx .* fft( bz, 1), 1)
-    ey .= ey .- dt .* csq .* dbz_dx 
+    for i in eachindex(bz)
+        @inbounds bz[i] += dt * (pstd.dy[i].re - pstd.dx[i].re)
+    end
+
+end
+
+function ampere_maxwell!( ex, ey, pstd, bz, dt )
+
+    pstd.dy .= bz
+    fft!(pstd.dy, 2)
+    pstd.dy .*= 1im .* pstd.ky
+    ifft!(pstd.dy, 2)
+    
+    for i in eachindex(ex)
+        @inbounds ex[i] += dt * pstd.dy[i].re
+    end
+
+    pstd.dx .= bz
+    fft!(pstd.dx, 1)
+    pstd.dx .*= 1im .* pstd.kx
+    ifft!(pstd.dx, 1)
+
+    for i in eachindex(ey)
+        @inbounds ey[i] -= dt * pstd.dx[i].re
+    end
 
 end 
+

@@ -1,75 +1,61 @@
-using LinearAlgebra
-
-const c = 1.0 # speed of light 
-const csq = c * c
-
 include("mesh.jl")
 include("pstd.jl")
 
-
 function main( nstep )
 
-    @show cfl    = 0.1     # Courant-Friedrich-Levy
-    @show tfinal = 10.     # final time
-    @show nstepmax = 1000  # max steps
-    @show md = 2	   # md : wave number x (initial condition)
-    @show nd = 2	   # nd : wave number y (initial condition)
-    @show nx = 1024	   # x number of points
-    @show ny = 1024	   # y number of points
-    @show dimx = 1.0	   # width
-    @show dimy = 1.0	   # height
+    @show nx   = 1024	   # x number of points
+    @show ny   = 1024	   # y number of points
+    @show dimx = 2π	   # width
+    @show dimy = 2π	   # height
 
     dx = dimx / nx
     dy = dimy / ny
 
     mesh = Mesh( dimx, nx, dimy, ny)
+    pstd = PSTD( mesh )
 
     dx, dy = mesh.dx, mesh.dy
 
-    x = LinRange( 0, dimx, nx+1)[1:end-1]
-    y = LinRange( 0, dimy, ny+1)[1:end-1]
+    x = LinRange( 0, dimx, nx+1)[1:end-1] |> collect 
+    y = LinRange( 0, dimy, ny+1)[1:end-1] |> collect |> transpose
     
-    dt = cfl / sqrt(1/dx^2+1/dy^2) / c
+    dt = (dx + dy) / ( π * sqrt(2))
     
-    @show nstep  = min( nstepmax, nstep)
+    ex = zeros( nx, ny)
+    ey = zeros( nx, ny)
+    bz = zeros( nx, ny)
     
-    ex = zeros(ComplexF64, nx, ny)
-    ey = zeros(ComplexF64, nx, ny)
-    bz = zeros(ComplexF64, nx, ny)
-    
-    omega = c * sqrt((md*pi/dimx)^2+(nd*pi/dimy)^2)
+    omega = sqrt(2)
 
     # Ex and Ey are set at t = 0.0
     # Bz is set at  t = -dt/2
 
-    bz .= ( - cos.(md*pi*x/dimx) 
-           .* cos.(nd*pi*y/dimy)
-           .* cos.(omega*(-0.5*dt)) )
+    bz .= - cos.(x) .* cos.(y) .* cos.(omega*(-0.5*dt))
     
-    for istep = 1:nstep # Loop over time
-    
-       # Ex(n) [1:nx]*[1:ny+1] --> B(n+1/2) [1:nx]*[1:ny]
-       # Ey(n) [1:nx+1]*[1:ny] --> B(n+1/2) [1:nx]*[1:ny]
+    for istep in 1:nstep
 
-       ampere_maxwell!(ex, ey, mesh, bz, dt) 
+        # Bz(n-1/2) --> B(n+1/2) 
+        faraday!(bz, pstd, ex, ey, dt)   
 
-       faraday!(bz, mesh, ex, ey, dt)   
-    
-       time = (istep-0.5)*dt
-       err_l2 = 0.0
-       for j = 1:ny, i = 1:nx
-           th_bz = (- cos(md*pi*x[i]/dimx)
-                    * cos(nd*pi*y[j]/dimy)
-                    * cos(omega*time))
-           err_l2 += (real(bz[i,j]) - th_bz)^2
-       end
+        # Ex(n) --> B(n+1/2) 
+        # Ey(n) --> B(n+1/2)
+        ampere_maxwell!(ex, ey, pstd, bz, dt) 
 
-       println(sqrt(err_l2))
+    end
 
-    end # next time step
+    @show time = (nstep-0.5)*dt
+    err_l2 = 0.0
+    for j = 1:ny, i = 1:nx
+        th_bz = - cos(x[i]) * cos(y[j]) * cos(omega*time)
+        err_l2 += (bz[i,j] - th_bz)^2
+    end
+
+    return sqrt(err_l2)
+
 
 end
+# -
 
 main( 1 ) # trigger building
 
-@time println(main( 1000 ))
+@time println(main( 400 ))

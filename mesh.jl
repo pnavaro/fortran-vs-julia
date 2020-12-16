@@ -6,13 +6,17 @@ struct Mesh
     dimy :: Float64
     ny :: Int64
     dy :: Float64
+    kx
+    ky
 
     function Mesh( dimx, nx, dimy, ny)
 
         dx = dimx / nx
         dy = dimy / ny
+        kx = 2π ./ dimx .* vcat(0:nx÷2-1,-nx÷2:-1)
+        ky = 2π ./ dimy .* vcat(0:ny÷2-1,-ny÷2:-1) |> transpose
 
-        new( dimx, nx, dx, dimy, ny, dy)
+        new( dimx, nx, dx, dimy, ny, dy, kx, ky)
 
     end
 
