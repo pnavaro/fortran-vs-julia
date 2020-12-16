@@ -36,4 +36,125 @@ end
 @fetch complicated_calculation()
 
 
+ch = Channel{Int}(5) 
+
+isready(ch) 
+
+
+put!(ch, 3)
+
+isready(ch) 
+
+take!(ch)
+
+put!(ch, 4)
+
+fetch(ch)
+
+take!(ch)
+
+isready(ch) 
+
+
+const mychannel = RemoteChannel(()->Channel{Int}(10), workers()[2])
+
+function whohas(s::String)
+    @everywhere begin
+        var = Symbol($s)
+        if isdefined(Main, var)
+            println("$var exists.")
+        else
+            println("Doesn't exist.")
+        end
+    end
+    nothing
+end
+
+whohas("mychannel")
+
+
+@everywhere const mychannel = $mychannel
+
+# +
+whohas("mychannel")
+
+
+
+# +
+function do_something()
+    rc = RemoteChannel(()->Channel{Int}(10)) # lives on the master
+    @sync for p in workers()
+        @spawnat p put!(rc, myid())
+    end
+    rc
+end
+
+r = do_something()
+# -
+
+using Distributed, BenchmarkTools; rmprocs(workers()); addprocs(4); nworkers()
+
+# +
+# serial version - count heads in a series of coin tosses
+function add_serial(n)
+    c = 0
+    for i = 1:n
+        c += rand(Bool)
+    end
+    c
+end
+
+@btime add_serial(200_000_000);
+
+# +
+# distributed version
+function add_distributed(n)
+    c = @distributed (+) for i in 1:n
+        Int(rand(Bool))
+    end
+    c
+end
+
+@btime add_distributed(200_000_000);
+
+# +
+# verbose distributed version
+function add_distributed(n)
+    c = @distributed (+) for i in 1:n
+        x = Int(rand(Bool))
+        println(x);
+        x
+    end
+    c
+end
+
+add_distributed(8);
+# -
+
+@everywhere using SharedArrays # must be loaded everywhere
+
+A = rand(2,3)
+
+S = SharedArray(A)
+
+# +
+function fill_shared_problematic(N)
+    S = SharedMatrix{Int64}(N,N)
+    @sync @distributed for i in 1:length(S) # added @sync here
+        S[i] = i
+    end
+    S
+end
+
+S = fill_shared_problematic(100)
+minimum(S)
+# -
+
+
+
+minimum(S)
+
+
+
+
 
