@@ -44,3 +44,4 @@ maxwell_mpi_fortran
 maxwell_serial_fortran
 .ipynb_checkpoints/read_data-checkpoint.jl
 Manifest.toml
+.ipynb_checkpoints/ring_with_distributed-checkpoint.jl
