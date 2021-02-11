@@ -1,4 +1,4 @@
-function ampere_maxwell!( fields, ix, jx, iy, jy, dt )
+function faraday!( fields, ix, jx, iy, jy, dt )
 
     dx, dy = fields.mesh.dx, fields.mesh.dy
 
@@ -10,7 +10,7 @@ function ampere_maxwell!( fields, ix, jx, iy, jy, dt )
 
 end
 
-function faraday!( fields, ix, jx, iy, jy, dt )
+function ampere_maxwell!( fields, ix, jx, iy, jy, dt )
 
     dx, dy = fields.mesh.dx, fields.mesh.dy
 
