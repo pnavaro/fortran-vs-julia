@@ -89,9 +89,9 @@ end module main_module
 </pre>
         </td>
         <td><pre lang="julia">
-module main_module
+module MainModule
     ...
-    module submodule 
+    module SubModule 
         ...
     end
 end
