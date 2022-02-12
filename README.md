@@ -1022,7 +1022,9 @@ close(f)
 inquire(unit, ...)
 </pre>
         </td>
-        <td>Use the file utilities provide by the <code>os</code> module.</td>
+        <td><pre lang="julia">
+isfile("my_file.txt")
+</pre></td>
     </tr>
     <tr>
         <td>backspace in a file</td>
@@ -1033,9 +1035,8 @@ backspace(unit, ...)
         </td>
         <td>
 <pre lang="julia">
-f.seek(-1, 1)
+skip(f, -1)
 </pre>
-Note: this works only when the file is open as a binary file.
         </td>
     </tr>
     <tr>
@@ -1047,7 +1048,7 @@ endfile(unit, ...)
         </td>
         <td>
 <pre lang="julia">
-f.read() == ''
+seekend(f)
 </pre>
 However, this is generally not needed.
         </td>
@@ -1061,7 +1062,7 @@ rewind(unit, ...)
         </td>
         <td>
 <pre lang="julia">
-f.seek(0)
+seekstart(f)
 </pre>
         </td>
     </tr>
