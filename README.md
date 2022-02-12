@@ -304,7 +304,7 @@ real(8), parameter :: pi = 4d0 * atan(1d0)
       <pre lang="julia">
 const answer = 42
 </pre>
-`pi` is a named constant in Julia standard.
+            <i>pi</i> is a named constant in Julia standard.
       </td>
     </tr>
     <tr>
@@ -896,7 +896,7 @@ end forall
         </td>
         <td>
 <pre lang="julia">
-a = zeros(10, 10)
+a = zeros(Float32, 10, 10)
 for i in 1:10, j in 1:10
     if i <= j
         a[i, j] = i + j
