@@ -970,7 +970,7 @@ open(unit, file, ...)
 </pre>
         </td>
         <td>
-<pre lang="python">
+<pre lang="julia">
 f = open(file, mode='r', ...)
 </pre>
         </td>
@@ -983,9 +983,9 @@ read(unit, fmt, ...) <i>&lt;input list&gt;</i>
 </pre>
         </td>
         <td>
-<pre lang="python">
-f.read(size)
-f.readline()
+<pre lang="julia">
+read(f)
+readlines(f)
 </pre>
         </td>
     </tr>
@@ -997,8 +997,8 @@ write(unit, fmt, ...) <i>&lt;output list&gt;</i>
 </pre>
         </td>
         <td>
-<pre lang="python">
-f.write()
+<pre lang="julia">
+write(f, ...)
 </pre>
         </td>
     </tr>
@@ -1011,7 +1011,7 @@ close(unit, ...)
         </td>
         <td>
 <pre lang="python">
-f.close()
+close(f)
 </pre>
         </td>
     </tr>
@@ -1032,7 +1032,7 @@ backspace(unit, ...)
 </pre>
         </td>
         <td>
-<pre lang="python">
+<pre lang="julia">
 f.seek(-1, 1)
 </pre>
 Note: this works only when the file is open as a binary file.
@@ -1046,7 +1046,7 @@ endfile(unit, ...)
 </pre>
         </td>
         <td>
-<pre lang="python">
+<pre lang="julia">
 f.read() == ''
 </pre>
 However, this is generally not needed.
@@ -1060,12 +1060,14 @@ rewind(unit, ...)
 </pre>
         </td>
         <td>
-<pre lang="python">
+<pre lang="julia">
 f.seek(0)
 </pre>
         </td>
     </tr>
 </table>
+
+
 ## Maxwell parallel solver in 2D
 
 We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology
