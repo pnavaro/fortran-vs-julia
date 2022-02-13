@@ -220,7 +220,7 @@ end select
         <td><code>do</code> construct</td>
         <td>
 <pre lang="fortran">
-do <i>start_value</i>, <i>end_value</i>, <i>step</i>
+do <i>i = start_value</i>, <i>end_value</i>, <i>step</i>
     ...
 end do
 </pre>
