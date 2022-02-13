@@ -977,7 +977,7 @@ open(unit, file, ...)
         </td>
         <td>
 <pre lang="julia">
-f = open(file, mode='r', ...)
+f = open(file, 'r')
 </pre>
         </td>
     </tr>
