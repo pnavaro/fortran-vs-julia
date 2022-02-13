@@ -1050,7 +1050,6 @@ endfile(unit, ...)
 <pre lang="julia">
 seekend(f)
 </pre>
-However, this is generally not needed.
         </td>
     </tr>
     <tr>
