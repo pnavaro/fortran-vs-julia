@@ -29,7 +29,7 @@ function my_program()
 end
 my_program()
 </pre>
-Not required but it is recommanded to use a function for your main program  </td>
+Not required but it is recommended to use a function for your main program  </td>
     </tr>
     <tr>
         <td>modules</td>
