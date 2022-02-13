@@ -1071,7 +1071,8 @@ seekstart(f)
 
 ## Maxwell parallel solver in 2D
 
-We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology
+Here an example of a Fortran to Julia translation. We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology.
+You can find a serial version and a parallel version using MPI library.
 
 Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
 
