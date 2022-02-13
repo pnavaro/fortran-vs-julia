@@ -23,7 +23,13 @@ program my_program
 end program
 </pre>
         </td>
-        <td>Not required. </td>
+        <td><pre lang="julia">
+function my_program()
+    ...
+end
+my_program()
+</pre>
+Not required but it is recommanded to use a function for your main program  </td>
     </tr>
     <tr>
         <td>modules</td>
