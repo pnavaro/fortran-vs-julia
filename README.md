@@ -885,9 +885,29 @@ end where
 b[a .> 0] .= 0
 b[a .<= 0] .= 1
 </pre>
-function <code>filter()</code> or comprehension can be used also.
         </td>
     </tr>
+ <tr>
+        <td>Comprehension</td>
+        <td></td>
+        <td>
+<pre lang="fortran">    
+  integer, parameter :: n = 20
+  integer :: i, j
+  complex, dimension(m) :: a
+
+  a = [ ( ( cmplx(i,j), i=j,n), j=1,n) ]
+  </pre>
+</td>
+    <td>
+<pre lang="julia">
+
+a = [ i + 1im *j for i=j,n, j=1,n]
+
+</pre>
+        </td>
+    </tr>       
+    
     <tr>
         <td><code>forall</code> construct</td>
         <td>
