@@ -889,6 +889,7 @@ b[a .<= 0] .= 1
     </tr>
  <tr>
         <td>Comprehension</td>
+        <td></td>
         <td>
 <pre lang="fortran">    
   integer, parameter :: n = 20
