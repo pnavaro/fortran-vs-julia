@@ -83,6 +83,41 @@ end
 </pre>
         </td>
     </tr>
+        <tr>
+        <td>Generic interface</td>
+        <td>
+<pre lang="fortran">
+module cube_root_functions
+interface cube_root
+    function s_cube_root(x)
+      real :: s_cube_root
+      real, intent(in) :: x
+    end function s_cube_root
+    function d_cube_root(x)
+      double precision :: d_cube_root
+      double precision, intent(in) :: x
+    end function d_cube_root
+  end interface
+end module cube_root_functions
+function s_cube_root(x)
+    real :: s_cube_root
+    real, intent(in) :: x
+    s_cube_root = x ** (1.0/3.0)
+end function s_cube_root
+function d_cube_root(x)
+    double precision :: d_cube_root
+    double precision, intent(in) :: x
+    d_cube_root = x ** (1.0d0/3.0d0)
+end function d_cube_root
+</pre>
+        </td>
+        <td>
+<pre lang="julia">
+cube_root( x :: Float32 ) :: Float32 = x^(1/3)
+cube_root( x :: Float64 ) :: Float64 = x^(1/3)
+</pre>
+        </td>
+    </tr>
     <tr>
         <td>submodules</td>
         <td>
