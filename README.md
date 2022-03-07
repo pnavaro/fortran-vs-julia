@@ -3,7 +3,7 @@
 This is a simple cheatsheet and some performance comparison for scientific programmers who are interested in discover Julia.
 It is not an exhaustive list. This page is inspired from [A Cheatsheet for Fortran 2008 Syntax: Comparison with Python 3](https://github.com/wusunlab/fortran-vs-python/).
 
-<table>
+<table class="fl-table">
     <tr>
         <td></td>
         <td>Fortran</td>
