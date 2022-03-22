@@ -320,8 +320,8 @@ continue
         <td>declaration</td>
         <td>
 <pre lang="fortran">
-integer(kind=kind_number) :: n = 0
-real(kind=kind_number) :: x = 0.
+integer(kind=8) :: n = 0
+real(kind=8) :: x = 0.
 </pre>
         </td>
         <td>
