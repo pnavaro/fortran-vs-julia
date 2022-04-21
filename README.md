@@ -920,6 +920,12 @@ end where
 b[a .> 0] .= 0
 b[a .<= 0] .= 1
 </pre>
+or (faster - does not allocate an intermediate array):
+<pre lang="julia">
+for i in eachindex(a)
+    a[i] > 0 ? b[i] = 0 : b[i] = 1
+end
+</pre>
         </td>
     </tr>
     <tr>
