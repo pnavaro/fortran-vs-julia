@@ -396,7 +396,6 @@ p => r
           <pre lang="julia">
 p = Ref(r)
 </pre>
-</pre>
       </td>
     </tr>
     <tr>
