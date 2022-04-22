@@ -248,7 +248,15 @@ select case <i>&lt;expr&gt;</i>
 end select
 </pre>
         </td>
-        <td>Not supported.
+        <td>Not supported. Possible alternative is to use the ternary <pre> ? : </pre> syntax:
+<pre lang="julia">
+function case(x)
+    x == 1     ? println(1) : 
+    x + 1 == 3 ? println(2) :
+    x == 3     ? println(3) :
+    println("greater than 3")
+end
+</pre>
         </td>
     </tr>
     <tr>
@@ -552,7 +560,7 @@ a(1)
         </td>
         <td>
 <pre lang="julia">
-a[1]
+a[1] (or a[begin] for general indexing) 
 </pre>
         </td>
     </tr>
@@ -566,7 +574,7 @@ This slice includes <code>a(5)</code>.
         </td>
         <td>
 <pre lang="julia">
-a[1:5]
+a[1:5] (or @view(a[1:5]) for non-allocating slicing)
 </pre>
 This slice includes <code>a[5]</code>.
         </td>
@@ -619,7 +627,7 @@ size(a, dim)
         </td>
         <td>
 <pre lang="julia">
-size(a)[dim]
+size(a, dim)
 </pre>
         </td>
     </tr>
