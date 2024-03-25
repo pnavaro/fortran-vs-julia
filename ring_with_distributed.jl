@@ -12,8 +12,8 @@ addprocs(4)
 workers()
 
 @fetch begin
-    println(myid());
-    rand(2,2)
+    println(myid())
+    rand(2, 2)
 end
 
 @sync begin
@@ -26,7 +26,7 @@ println("Done!")
 
 @everywhere begin # execute this block on all workers
     using Random
-    
+
     function complicated_calculation()
         sleep(1)
         randexp(5) # lives in Random
@@ -36,14 +36,14 @@ end
 @fetch complicated_calculation()
 
 
-ch = Channel{Int}(5) 
+ch = Channel{Int}(5)
 
-isready(ch) 
+isready(ch)
 
 
 put!(ch, 3)
 
-isready(ch) 
+isready(ch)
 
 take!(ch)
 
@@ -53,10 +53,10 @@ fetch(ch)
 
 take!(ch)
 
-isready(ch) 
+isready(ch)
 
 
-const mychannel = RemoteChannel(()->Channel{Int}(10), workers()[2])
+const mychannel = RemoteChannel(() -> Channel{Int}(10), workers()[2])
 
 function whohas(s::String)
     @everywhere begin
@@ -82,7 +82,7 @@ whohas("mychannel")
 
 # +
 function do_something()
-    rc = RemoteChannel(()->Channel{Int}(10)) # lives on the master
+    rc = RemoteChannel(() -> Channel{Int}(10)) # lives on the master
     @sync for p in workers()
         @spawnat p put!(rc, myid())
     end
@@ -92,7 +92,10 @@ end
 r = do_something()
 # -
 
-using Distributed, BenchmarkTools; rmprocs(workers()); addprocs(4); nworkers()
+using Distributed, BenchmarkTools;
+rmprocs(workers());
+addprocs(4);
+nworkers();
 
 # +
 # serial version - count heads in a series of coin tosses
@@ -109,7 +112,7 @@ end
 # +
 # distributed version
 function add_distributed(n)
-    c = @distributed (+) for i in 1:n
+    c = @distributed (+) for i = 1:n
         Int(rand(Bool))
     end
     c
@@ -120,9 +123,9 @@ end
 # +
 # verbose distributed version
 function add_distributed(n)
-    c = @distributed (+) for i in 1:n
+    c = @distributed (+) for i = 1:n
         x = Int(rand(Bool))
-        println(x);
+        println(x)
         x
     end
     c
@@ -133,14 +136,14 @@ add_distributed(8);
 
 @everywhere using SharedArrays # must be loaded everywhere
 
-A = rand(2,3)
+A = rand(2, 3)
 
 S = SharedArray(A)
 
 # +
 function fill_shared_problematic(N)
-    S = SharedMatrix{Int64}(N,N)
-    @sync @distributed for i in 1:length(S) # added @sync here
+    S = SharedMatrix{Int64}(N, N)
+    @sync @distributed for i = 1:length(S) # added @sync here
         S[i] = i
     end
     S
@@ -153,8 +156,3 @@ minimum(S)
 
 
 minimum(S)
-
-
-
-
-
