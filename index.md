@@ -366,6 +366,7 @@ complex :: z = (1., -1.)
         <td>
 <pre lang="julia">
 z = 1 - 1im
+z = complex(1, -1)
 </pre>
         </td>
     </tr>
