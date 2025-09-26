@@ -1141,12 +1141,23 @@ seekstart(f)
 
 ## Maxwell parallel solver in 2D
 
-Here an example of a Fortran to Julia translation. We use the Yee numerical scheme FDTD: [Finite-Difference Time-Domain method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method) and MPI topology.
-You can find a serial version and a parallel version using MPI library.
+**Update 26/09/2025**: [@loiseaujc](https://github.com/loiseaujc)
+added a modern fortran version (gfortran-15 required). Check the
+PR https://github.com/pnavaro/fortran-vs-julia/pull/8 to see details.
 
-Test your [MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/) installation with 
+Here an example of a Fortran to Julia translation. We use the Yee
+numerical scheme FDTD: [Finite-Difference Time-Domain
+method](https://en.wikipedia.org/wiki/Finite-difference_time-domain_method)
+and MPI topology.  You can find a serial version and a parallel
+version using MPI library.
+
+Test your
+[MPI.jl](https://juliaparallel.github.io/MPI.jl/stable/installation/)
+installation with
 
 ```
+$ cd julia_code
+$ julia --project -e "import Pkg; Pkg.instantiate()"
 $ mpirun -np 4 julia --project hello_mpi.jl
 Hello world, I am 0 of 4
 Hello world, I am 3 of 4

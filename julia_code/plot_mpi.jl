@@ -9,8 +9,8 @@ function plot_fields(mesh, rank, proc, field, xp, yp, iplot)
     end
 
     io = open("data/$(rank)/$(iplot)", "w")
-    for j = iy:jy
-        for i = ix:jx
+    for j in iy:jy
+        for i in ix:jx
             @printf(io, "%f %f %f \n", xp + (i - 0.5) * dx, yp + (j - 1) * dy, field[i, j])
         end
         @printf(io, "\n")
@@ -33,7 +33,7 @@ function plot_fields(mesh, rank, proc, field, xp, yp, iplot)
         write(io, "set title '$(iplot)' \n")
         write(io, "splot 'data/$(rank)/$(iplot)' w l")
 
-        for p = 1:proc-1
+        for p in 1:(proc - 1)
             write(io, ", 'data/$(p)/$(iplot)' w l")
         end
         write(io, "\n")

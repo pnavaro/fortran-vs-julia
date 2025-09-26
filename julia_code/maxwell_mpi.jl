@@ -1,7 +1,7 @@
 using MPI
 using Printf
 
-const c = 1.0 # speed of light 
+const c = 1.0 # speed of light
 const csq = c * c
 
 struct Mesh
@@ -16,9 +16,9 @@ end
 struct MeshFields
 
     mesh::Mesh
-    ex::Array{Float64,2}
-    ey::Array{Float64,2}
-    bz::Array{Float64,2}
+    ex::Array{Float64, 2}
+    ey::Array{Float64, 2}
+    bz::Array{Float64, 2}
 
     function MeshFields(mesh)
 
@@ -26,7 +26,7 @@ struct MeshFields
         ex = zeros(Float64, (nx, ny + 1))
         ey = zeros(Float64, (nx + 1, ny))
         bz = zeros(Float64, (nx + 1, ny + 1))
-        new(mesh, ex, ey, bz)
+        return new(mesh, ex, ey, bz)
 
     end
 
@@ -38,12 +38,13 @@ function faraday!(fields, dt)
     dx, dy = fields.mesh.dx, fields.mesh.dy
     nx, ny = fields.mesh.nx, fields.mesh.ny
 
-    for j = 1:ny, i = 1:nx
-        dex_dy = (fields.ex[i, j+1] - fields.ex[i, j]) / dy
-        dey_dx = (fields.ey[i+1, j] - fields.ey[i, j]) / dx
+    for j in 1:ny, i in 1:nx
+        dex_dy = (fields.ex[i, j + 1] - fields.ex[i, j]) / dy
+        dey_dx = (fields.ey[i + 1, j] - fields.ey[i, j]) / dx
         fields.bz[i, j] = fields.bz[i, j] + dt * (dex_dy - dey_dx)
     end
 
+    return
 end
 
 function ampere_maxwell!(fields, dt)
@@ -51,16 +52,17 @@ function ampere_maxwell!(fields, dt)
     dx, dy = fields.mesh.dx, fields.mesh.dy
     nx, ny = fields.mesh.nx, fields.mesh.ny
 
-    for j = 2:ny+1, i = 1:nx
-        dbz_dy = (fields.bz[i, j] - fields.bz[i, j-1]) / dy
+    for j in 2:(ny + 1), i in 1:nx
+        dbz_dy = (fields.bz[i, j] - fields.bz[i, j - 1]) / dy
         fields.ex[i, j] = fields.ex[i, j] + dt * csq * dbz_dy
     end
 
-    for j = 1:ny, i = 2:nx+1
-        dbz_dx = (fields.bz[i, j] - fields.bz[i-1, j]) / dx
+    for j in 1:ny, i in 2:(nx + 1)
+        dbz_dx = (fields.bz[i, j] - fields.bz[i - 1, j]) / dx
         fields.ey[i, j] = fields.ey[i, j] - dt * csq * dbz_dx
     end
 
+    return
 end
 
 include("plot_mpi.jl")
@@ -122,7 +124,7 @@ function main(nstep)
     fields = MeshFields(mesh)
 
     omega = c * sqrt((md * pi / dimx)^2 + (nd * pi / dimy)^2)
-    for j = 1:my, i = 1:mx
+    for j in 1:my, i in 1:mx
         x = xp + (i - 0.5) * dx
         y = yp + (j - 0.5) * dy
         fields.bz[i, j] =
@@ -131,7 +133,7 @@ function main(nstep)
 
     tag = 1111
 
-    for istep = 1:nstep # Loop over time
+    for istep in 1:nstep # Loop over time
 
         # E(n) [1:mx]*[1:my] --> B(n+1/2) [1:mx-1]*[1:my-1]
 
@@ -195,14 +197,14 @@ function main(nstep)
 
     err_l2 = 0.0
     time = (nstep - 0.5) * dt
-    for j = 1:my, i = 1:mx
+    for j in 1:my, i in 1:mx
         x = xp + (i - 0.5) * dx
         y = yp + (j - 0.5) * dy
         th_bz = (-cos(md * pi * x / dimx) * cos(nd * pi * y / dimy) * cos(omega * time))
         err_l2 += (fields.bz[i, j] - th_bz)^2
     end
 
-    for k = 0:proc-1
+    for k in 0:(proc - 1)
         if rank == k
             println("----")
             println("$rank : $mx, $my  $err_l2 ")
@@ -229,7 +231,7 @@ tend = MPI.Wtime()
 
 if MPI.Comm_rank(MPI.COMM_WORLD) == 0
     println(" error : $(err_l2) ")
-    println(" time : $(tend -tbegin) ")
+    println(" time : $(tend - tbegin) ")
 end
 
 MPI.Finalize()

@@ -1,4 +1,4 @@
-const c = 1.0 # speed of light 
+const c = 1.0 # speed of light
 const csq = c * c
 
 include("mesh.jl")
@@ -35,18 +35,18 @@ function main(nstep)
     # Ex and Ey are set at t = 0.0
     # Bz is set at  t = -dt/2
 
-    for j = 1:ny, i = 1:nx
+    for j in 1:ny, i in 1:nx
         fields.bz[i, j] = (
             -cos(md * pi * ((i - 0.5) * dx / dimx)) *
-            cos(nd * pi * ((j - 0.5) * dy / dimy)) *
-            cos(omega * (-0.5 * dt))
+                cos(nd * pi * ((j - 0.5) * dy / dimy)) *
+                cos(omega * (-0.5 * dt))
         )
     end
 
     tag = 1111
 
 
-    for istep = 1:nstep # Loop over time
+    for istep in 1:nstep # Loop over time
 
         # Ex(n) [1:nx]*[1:ny+1] --> B(n+1/2) [1:nx]*[1:ny]
         # Ey(n) [1:nx+1]*[1:ny] --> B(n+1/2) [1:nx]*[1:ny]
@@ -59,11 +59,11 @@ function main(nstep)
 
         err_l2 = 0.0
         time = (istep - 0.5) * dt
-        for j = 1:ny, i = 1:nx
+        for j in 1:ny, i in 1:nx
             th_bz = (
                 -cos(md * pi * ((i - 0.5) * dx / dimx)) *
-                cos(nd * pi * ((j - 0.5) * dy / dimy)) *
-                cos(omega * time)
+                    cos(nd * pi * ((j - 0.5) * dy / dimy)) *
+                    cos(omega * time)
             )
             err_l2 += (fields.bz[i, j] - th_bz)^2
         end
@@ -72,6 +72,7 @@ function main(nstep)
 
     end # next time step
 
+    return
 end
 
 main(1) # trigger building

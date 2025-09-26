@@ -42,7 +42,7 @@ contains
       c = 1d0                !celerite de la lumiere
       csq = c*c
 
-      open (10, file="input_data", status='old')
+      open (10, file="input_data.nml", status='old')
       read (10, donnees)
       close (10)
 

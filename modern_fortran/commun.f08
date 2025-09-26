@@ -26,6 +26,7 @@ contains
 
    subroutine readin()
       implicit none(external)
+      integer :: io
       namelist /donnees/ cfl, & !nbre de Courant
          tfinal, &              !duree maxi
          nstepmax, &            !nbre d'iterations maxi
@@ -34,18 +35,17 @@ contains
          nx, ny, &              !nombre de points dans les deux directions
          dimx, dimy             !dimensions du domaine
 
-!***Initialisation  des valeurs pas default
-      open (10, file="../input_data", status='old')
-      read (10, donnees)
-      close (10)
+      open (newunit=io, file="input_data.nml", status='old')
+      read (io, donnees)
+      close (io)
 
-      write (*, "(a,g12.3)") " largeur dimx              = ", dimx
-      write (*, "(a,g12.3)") " longueur dimy             = ", dimy
-      write (*, "(a,g12.3)") " temps                     = ", tfinal
-      write (*, "(a,g12.3)") " nombre nx                 = ", nx
-      write (*, "(a,g12.3)") " nombre ny                 = ", ny
-      write (*, "(a,g12.3)") " nombre de Courant         = ", cfl
-      write (*, "(a,g12.3)") " frequence des diagnostics = ", idiag
+      write (*, "(a,g12.3)") " Width dimx              = ", dimx
+      write (*, "(a,g12.3)") " Length dimy             = ", dimy
+      write (*, "(a,g12.3)") " Final time              = ", tfinal
+      write (*, "(a,g12.3)") " Number nx               = ", nx
+      write (*, "(a,g12.3)") " Number ny               = ", ny
+      write (*, "(a,g12.3)") " CFL                     = ", cfl
+      write (*, "(a,g12.3)") " Diagnostic interval     = ", idiag
    end subroutine readin
 
 end module commun

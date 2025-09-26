@@ -24,6 +24,7 @@ contains
    integer :: kk0, kk1, kk2, kk3, kk4
    character(len=4) :: fin
    character(len=1) :: aa, bb, cc, dd
+   integer :: data_unit, gnu_unit
 
    if (iplot == 1) then
       k = len_trim(outdir)
@@ -42,39 +43,39 @@ contains
    dd = char(kk4 + 48)
    fin = aa//bb//cc//dd
 
-   open (80, file=trim(outdir)//fin//".dat")
+   open (newunit=data_unit, file=trim(outdir)//fin//".dat")
    do i = ix, jx
       do j = iy, jy
-         write (80, "(4e10.2)") xp + (i - 0.5)*dx, yp + (j - .5)*dy, f%bz(i, j)
+         write (data_unit, "(4e10.2)") xp + (i - 0.5)*dx, yp + (j - .5)*dy, f%bz(i, j)
       end do
-      write (80, *)
+      write (data_unit, *)
    end do
-   close (80)
+   close (data_unit)
 
    if (rang == 0) then
       do k = 1, 3
-         open (90, file='bz.gnu', position="append")
+         open (newunit=gnu_unit, file='bz.gnu', position="append")
          if (iplot == 1) then
-            rewind (90)
-            write (90, *) "set xr[-0.1:1.1]"
-            write (90, *) "set yr[-0.1:1.1]"
-            write (90, *) "set zr[-1.1:1.1]"
-            !write(90,*)"set cbrange[-1:1]"
-            !write(90,*)"set pm3d"
-            write (90, *) "set surf"
-            !write(90,*)"set term x11"
+            rewind (gnu_unit)
+            write (gnu_unit, *) "set xr[-0.1:1.1]"
+            write (gnu_unit, *) "set yr[-0.1:1.1]"
+            write (gnu_unit, *) "set zr[-1.1:1.1]"
+            !write(gnu_unit,*)"set cbrange[-1:1]"
+            !write(gnu_unit,*)"set pm3d"
+            write (gnu_unit, *) "set surf"
+            !write(gnu_unit,*)"set term x11"
          end if
-         write (90, *) "set title 'Time = ", time, "'"
-         write (90, "(a)", advance='no') "splot '"         &
+         write (gnu_unit, *) "set title 'Time = ", time, "'"
+         write (gnu_unit, "(a)", advance='no') "splot '"         &
          & //trim(outdir)//fin//".dat' u 1:2:3 w lines"
 
          do j = 1, nproc - 1
-            write (90, "(a)", advance='no') "&
+            write (gnu_unit, "(a)", advance='no') "&
             & ,'"//outdir(1:5)//char(j + 48)//"/"//fin// &
             & ".dat' u 1:2:3 w lines"
          end do
-         write (90, *)
-         close (90)
+         write (gnu_unit, *)
+         close (gnu_unit)
       end do
    end if
 
