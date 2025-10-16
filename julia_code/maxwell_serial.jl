@@ -53,6 +53,7 @@ function @main(ARGS)
         )
     end
 
+    time = 0.0
     err_l2 = Inf
 
     for istep in 1:nstep # Loop over time
@@ -60,22 +61,27 @@ function @main(ARGS)
         # Ex(n) [1:nx]*[1:ny+1] --> B(n+1/2) [1:nx]*[1:ny]
         # Ey(n) [1:nx+1]*[1:ny] --> B(n+1/2) [1:nx]*[1:ny]
 
-        ampere_maxwell!(fields, 1, nx, 1, ny, dt)
+        faraday!(fields, 1, nx, 1, ny, dt)
+
+        time += 0.5dt
 
         periodic_bc!(fields, 1, nx, 1, ny, dt)
 
-        faraday!(fields, 1, nx, 1, ny, dt)
+        ampere_maxwell!(fields, 1, nx, 1, ny, dt)
+
 
         err_l2 = 0.0
         time = (istep - 0.5) * dt
         for j in 1:ny, i in 1:nx
             th_bz = (
                 -cos(md * pi * ((i - 0.5) * dx / dimx)) *
-                    cos(nd * pi * ((j - 0.5) * dy / dimy)) *
-                    cos(omega * time)
+                 cos(nd * pi * ((j - 0.5) * dy / dimy)) *
+                 cos(omega * time)
             )
             err_l2 += (fields.bz[i, j] - th_bz)^2
         end
+
+        time += 0.5dt
 
         println(Core.stdout, sqrt(err_l2))
 
