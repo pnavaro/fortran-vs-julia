@@ -46,3 +46,4 @@ maxwell_serial_fortran
 Manifest.toml
 .ipynb_checkpoints/ring_with_distributed-checkpoint.jl
 .ipynb_checkpoints/maxwell_pstd-checkpoint.jl
+/julia_code/build
