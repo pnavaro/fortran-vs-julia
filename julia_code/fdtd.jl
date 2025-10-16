@@ -1,4 +1,4 @@
-function faraday!(fields, ix, jx, iy, jy, dt)
+function faraday!(fields::MeshFields, ix::Int, jx::Int, iy::Int, jy::Int, dt::Float64)
 
     dx, dy = fields.mesh.dx, fields.mesh.dy
 
@@ -11,7 +11,7 @@ function faraday!(fields, ix, jx, iy, jy, dt)
     return
 end
 
-function ampere_maxwell!(fields, ix, jx, iy, jy, dt)
+function ampere_maxwell!(fields::MeshFields, ix::Int, jx::Int, iy::Int, jy::Int, dt::Float64)
 
     dx, dy = fields.mesh.dx, fields.mesh.dy
 
@@ -28,7 +28,7 @@ function ampere_maxwell!(fields, ix, jx, iy, jy, dt)
     return
 end
 
-function periodic_bc!(fields, ix, jx, iy, jy, dt)
+function periodic_bc!(fields::MeshFields, ix::Int, jx::Int, iy::Int, jy::Int, dt::Float64)
 
     for i in ix:jx
         dbz_dy = (fields.bz[i, iy] - fields.bz[i, jy]) / fields.mesh.dy

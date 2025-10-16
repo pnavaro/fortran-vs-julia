@@ -1141,6 +1141,16 @@ seekstart(f)
 
 ## Maxwell parallel solver in 2D
 
+**Update 16/10/2025**: Since [Julia 1.12](https://julialang.org/blog/2025/10/julia-1.12-highlights/#new_--trim_feature) 
+it is possible to build an application and execute it without the julia runtime. I added a `Makefile` to build this application in the directory `julia-code`. You must install [JuliaC](https://github.com/JuliaLang/JuliaC.jl).
+
+```bash
+cd julia_code
+make
+time ./build/bin/app_exe 1
+time ./build/bin/app_exe 1000
+```
+
 **Update 26/09/2025**: [@loiseaujc](https://github.com/loiseaujc)
 added a modern fortran version (gfortran-15 required). Check the
 PR https://github.com/pnavaro/fortran-vs-julia/pull/8 to see details.
@@ -1172,17 +1182,17 @@ On small program like this in Julia is really fast.
 
 #### 1200 x 1200 and 1000 iterations.
 
-- `julia -O3 --check-bounds=no maxwell_serial.jl` : 14 seconds
+- `julia -O3 --check-bounds=no --startup-file=no maxwell_serial.jl` : 14 seconds
 - `make && time ./maxwell_serial_fortran` : 31 seconds 
 
 #### 1200 x 1200 on 9 processors and 1000 iterations
 
 - `make && time mpirun -np 9 ./maxwell_mpi_fortran` : 7 seconds 
-- `mpirun -np 9 julia --project -O3 --check-bounds=no ` : 5 seconds
+- `mpirun -np 9 julia --project -O3 --check-bounds=no --startup-file=no maxwell_mpi.jl` : 5 seconds
 
 ### Plot the magnetic field
 
-Uncomment the plot_fields call in Julia programs or change idiag value in input_data for fortran.
+Uncomment the `plot_fields` call in Julia programs or change idiag value in input_data for fortran.
 
 ```
 gnuplot bz.gnu

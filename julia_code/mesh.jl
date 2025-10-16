@@ -1,22 +1,18 @@
 struct Mesh
 
     dimx::Float64
-    nx::Int64
+    nx::Int
     dx::Float64
     dimy::Float64
-    ny::Int64
+    ny::Int
     dy::Float64
-    kx::Any
-    ky::Any
 
-    function Mesh(dimx, nx, dimy, ny)
+    function Mesh(dimx::Float64, nx::Int, dimy::Float64, ny::Int)
 
         dx = dimx / nx
         dy = dimy / ny
-        kx = 2π ./ dimx .* vcat(0:(nx ÷ 2 - 1), (-nx ÷ 2):-1)
-        ky = 2π ./ dimy .* vcat(0:(ny ÷ 2 - 1), (-ny ÷ 2):-1) |> transpose
 
-        return new(dimx, nx, dx, dimy, ny, dy, kx, ky)
+        return new(dimx, nx, dx, dimy, ny, dy)
 
     end
 
@@ -29,7 +25,7 @@ struct MeshFields
     ey::Array{Float64, 2}
     bz::Array{Float64, 2}
 
-    function MeshFields(mesh)
+    function MeshFields(mesh::Mesh)
 
         nx, ny = mesh.nx, mesh.ny
         ex = zeros(Float64, (nx, ny + 1))
@@ -39,7 +35,7 @@ struct MeshFields
 
     end
 
-    function MeshFields(mesh, nx, ny)
+    function MeshFields(mesh::Mesh, nx::Int, ny::Int)
 
         ex = zeros(Float64, (nx + 1, ny + 1))
         ey = zeros(Float64, (nx + 1, ny + 1))
